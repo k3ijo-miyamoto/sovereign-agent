@@ -1,0 +1,20 @@
+[package]
+name = "sovereign"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "sovereign"
+path = "src/main.rs"
+
+[dependencies]
+common     = { path = "../common" }
+ollama     = { path = "../ollama" }
+anthropic  = { path = "../anthropic" }
+agent      = { path = "../agent" }
+tools      = { path = "../tools" }
+tokio.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+async-trait.workspace = true

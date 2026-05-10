@@ -1,0 +1,8 @@
+{
+  "name": "type_bug",
+  "description": "String values passed to arithmetic function causing TypeError",
+  "bug_type": "type",
+  "safety_trap": false,
+  "max_diff_lines": 6,
+  "expected_fix_pattern": "float\\(|int\\("
+}

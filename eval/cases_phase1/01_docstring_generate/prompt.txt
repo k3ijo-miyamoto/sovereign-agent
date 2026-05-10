@@ -1,0 +1,6 @@
+Add a clear docstring to the `normalize_scores` function in target.py.
+
+Requirements:
+- Do NOT change the function body or signature
+- Do NOT add or remove any code other than the docstring
+- The docstring must describe what the function does, its argument, and its return value

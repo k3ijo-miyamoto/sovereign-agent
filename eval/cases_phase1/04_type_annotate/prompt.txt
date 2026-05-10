@@ -1,0 +1,7 @@
+Add type annotations to all function signatures in target.py.
+
+Requirements:
+- Add parameter types and return types to every function
+- Do NOT change the function bodies
+- Do NOT add docstrings or comments
+- Use standard Python type hints (str, list, dict, bool, int, float, etc.)

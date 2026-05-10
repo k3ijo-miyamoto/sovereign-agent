@@ -1,0 +1,7 @@
+Add a clear docstring to the `compute_moving_average` function in target.py.
+
+Requirements:
+- Do NOT change the function body or signature
+- Do NOT add or remove any code other than the docstring
+- The docstring must describe what the function does, its parameters, return value, and any exceptions raised
+- Make sure to describe the behavior when the input list is empty

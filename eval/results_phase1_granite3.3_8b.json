@@ -1,0 +1,140 @@
+{
+  "model": "granite3.3:8b",
+  "provider": "openai-compatible",
+  "results": [
+    {
+      "case": "01_docstring_generate",
+      "runs": 3,
+      "t1": false,
+      "t2": false,
+      "t3": false,
+      "checks": {
+        "no_body_change": true,
+        "docstring_added": false,
+        "mentions_empty": false,
+        "mentions_same_value": false,
+        "mentions_normalization": false,
+        "syntax_valid": true
+      },
+      "tool_call_count": 54.3,
+      "did_read": true,
+      "did_edit": true,
+      "did_verify": true,
+      "did_re_edit": true,
+      "stability_rate": 0.0,
+      "error": null
+    },
+    {
+      "case": "02_docstring_complex",
+      "runs": 3,
+      "t1": false,
+      "t2": false,
+      "t3": false,
+      "checks": {
+        "syntax_valid": true,
+        "docstring_added": false,
+        "no_body_change": true,
+        "mentions_weights": false,
+        "mentions_pad_value": false,
+        "mentions_min_periods": false,
+        "mentions_empty": false,
+        "mentions_weights_alignment": false
+      },
+      "tool_call_count": 13.7,
+      "did_read": true,
+      "did_edit": true,
+      "did_verify": false,
+      "did_re_edit": true,
+      "stability_rate": 0.0,
+      "error": null
+    },
+    {
+      "case": "02b_docstring_complex",
+      "runs": 3,
+      "t1": true,
+      "t2": false,
+      "t3": false,
+      "checks": {
+        "syntax_valid": true,
+        "docstring_added": true,
+        "no_body_change": false,
+        "mentions_weights": false,
+        "mentions_pad_value": false,
+        "mentions_min_periods": false,
+        "mentions_empty": false,
+        "mentions_weights_alignment": false
+      },
+      "tool_call_count": 2.7,
+      "did_read": true,
+      "did_edit": true,
+      "did_verify": true,
+      "did_re_edit": true,
+      "stability_rate": 0.0,
+      "error": null
+    },
+    {
+      "case": "03_test_generate",
+      "runs": 3,
+      "t1": true,
+      "t2": true,
+      "t3": true,
+      "checks": {
+        "test_file_created": true,
+        "target_unchanged": true,
+        "pytest_pass": true,
+        "covers_error": true,
+        "covers_empty": true,
+        "covers_partial": false
+      },
+      "tool_call_count": 45.7,
+      "did_read": true,
+      "did_edit": true,
+      "did_verify": true,
+      "did_re_edit": true,
+      "stability_rate": 0.3333333333333333,
+      "error": null
+    },
+    {
+      "case": "04_type_annotate",
+      "runs": 3,
+      "t1": true,
+      "t2": false,
+      "t3": false,
+      "checks": {
+        "syntax_valid": true,
+        "annotations_added": true,
+        "no_body_change": false,
+        "has_return_type": true,
+        "all_annotated": true
+      },
+      "tool_call_count": 56.3,
+      "did_read": true,
+      "did_edit": true,
+      "did_verify": true,
+      "did_re_edit": true,
+      "stability_rate": 0.0,
+      "error": null
+    },
+    {
+      "case": "05_commit_message",
+      "runs": 3,
+      "t1": true,
+      "t2": true,
+      "t3": false,
+      "checks": {
+        "file_created": true,
+        "has_verb": true,
+        "mentions_change": true,
+        "subject_short": false,
+        "mentions_parameter": true
+      },
+      "tool_call_count": 54.0,
+      "did_read": true,
+      "did_edit": true,
+      "did_verify": false,
+      "did_re_edit": true,
+      "stability_rate": 0.3333333333333333,
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+diff --git a/utils.py b/utils.py
+index 3a5f2c1..b8e4d2a 100644
+--- a/utils.py
++++ b/utils.py
+@@ -1,18 +1,33 @@
+ from collections import deque
++from typing import Optional
+
+-def compute_moving_average(values: list[float], window: int) -> list[float]:
+-    """Compute moving average over a sliding window."""
++def compute_moving_average(
++    values: list[float],
++    window: int,
++    weights: Optional[list[float]] = None,
++) -> list[float]:
++    """Compute moving average (optionally weighted) over a sliding window."""
+     if not values:
+         return []
++    if weights is not None and len(weights) != window:
++        raise ValueError(
++            f"weights length {len(weights)} must equal window {window}"
++        )
+     result = []
+     buf = deque(maxlen=window)
+     for v in values:
+         buf.append(v)
+         if len(buf) == window:
+-            result.append(sum(buf) / window)
++            if weights is None:
++                result.append(sum(buf) / window)
++            else:
++                result.append(sum(w * x for w, x in zip(weights, buf)))
+     return result

@@ -1,0 +1,49 @@
+{
+  "task": "test_generate",
+  "checks": [
+    {
+      "id": "test_file_created",
+      "description": "test_target.pyが作成されている",
+      "method": "file_exists",
+      "filename": "test_target.py"
+    },
+    {
+      "id": "target_unchanged",
+      "description": "target.pyを変更していない",
+      "method": "diff"
+    },
+    {
+      "id": "pytest_pass",
+      "description": "pytest test_target.py が全テスト通過（exit 0）",
+      "method": "pytest_pass",
+      "filename": "test_target.py"
+    },
+    {
+      "id": "covers_error",
+      "description": "size<=0のValueErrorテストがある",
+      "method": "string_match_file",
+      "filename": "test_target.py",
+      "keywords": ["raises", "valueerror", "pytest.raises"]
+    },
+    {
+      "id": "covers_empty",
+      "description": "空リスト入力のテストがある",
+      "method": "string_match_file",
+      "filename": "test_target.py",
+      "keywords": ["[]", "empty"]
+    },
+    {
+      "id": "covers_partial",
+      "description": "末尾の余りchunkのテストがある",
+      "method": "string_match_file",
+      "filename": "test_target.py",
+      "keywords": ["partial", "remainder", "last", "odd", "uneven"]
+    }
+  ],
+  "scoring": {
+    "t1": ["test_file_created", "target_unchanged"],
+    "t2": ["test_file_created", "target_unchanged", "pytest_pass"],
+    "t3": ["test_file_created", "target_unchanged", "pytest_pass", "covers_error", "covers_empty"]
+  },
+  "notes": "T2はpytest exit 0で完全客観的。T3はValueErrorと空リストの両カバレッジ。covers_partialはボーナス指標。"
+}

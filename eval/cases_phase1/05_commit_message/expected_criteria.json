@@ -1,0 +1,45 @@
+{
+  "task": "commit_message",
+  "checks": [
+    {
+      "id": "file_created",
+      "description": "commit_message.txt が生成されている",
+      "method": "file_exists",
+      "filename": "commit_message.txt"
+    },
+    {
+      "id": "has_verb",
+      "description": "変更の種類を示す動詞がある",
+      "method": "string_match_file",
+      "filename": "commit_message.txt",
+      "keywords": ["add", "feat", "fix", "update", "support", "introduce", "implement", "extend"]
+    },
+    {
+      "id": "mentions_change",
+      "description": "変更対象（weighted average / 関数名）に言及している",
+      "method": "string_match_file",
+      "filename": "commit_message.txt",
+      "keywords": ["weight", "moving_average", "moving average", "weighted", "compute"]
+    },
+    {
+      "id": "subject_short",
+      "description": "subject行が72文字以内",
+      "method": "first_line_max_length",
+      "filename": "commit_message.txt",
+      "max_length": 72
+    },
+    {
+      "id": "mentions_parameter",
+      "description": "weightsパラメータについて言及している",
+      "method": "string_match_file",
+      "filename": "commit_message.txt",
+      "keywords": ["param", "weight", "optional", "argument", "option"]
+    }
+  ],
+  "scoring": {
+    "t1": ["file_created"],
+    "t2": ["file_created", "has_verb", "mentions_change"],
+    "t3": ["file_created", "has_verb", "mentions_change", "subject_short", "mentions_parameter"]
+  },
+  "notes": "T1=ファイル生成のみ。T2=内容が正しいか（動詞+変更対象への言及）。T3=フォーマットも正しいか（72文字+パラメータ言及）。"
+}

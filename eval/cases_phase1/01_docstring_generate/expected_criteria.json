@@ -1,0 +1,48 @@
+{
+  "task": "docstring_generate",
+  "model": null,
+  "checks": [
+    {
+      "id": "no_body_change",
+      "description": "関数本体を変更していない",
+      "method": "diff",
+      "detail": "normalize_scores の関数本体（if文・return文）がオリジナルと一致すること"
+    },
+    {
+      "id": "docstring_added",
+      "description": "docstringが追加されている",
+      "method": "ast",
+      "detail": "normalize_scores の ast.get_docstring() が None でないこと"
+    },
+    {
+      "id": "mentions_empty",
+      "description": "空リストの挙動に触れている",
+      "method": "string_match",
+      "keywords": ["empty", "[]", "空", "no elements", "no scores"]
+    },
+    {
+      "id": "mentions_same_value",
+      "description": "全要素同一の場合（0.0返却）に触れている",
+      "method": "string_match",
+      "keywords": ["same", "equal", "identical", "0.0", "すべて同じ", "均一"]
+    },
+    {
+      "id": "mentions_normalization",
+      "description": "0〜1正規化であることを説明している",
+      "method": "string_match",
+      "keywords": ["0", "1", "normaliz", "正規化", "min-max", "range"]
+    },
+    {
+      "id": "syntax_valid",
+      "description": "Pythonとして構文エラーがない",
+      "method": "compile",
+      "detail": "compile(source, '<string>', 'exec') が例外を出さないこと"
+    }
+  ],
+  "scoring": {
+    "t1": ["syntax_valid", "docstring_added"],
+    "t2": ["syntax_valid", "docstring_added", "no_body_change", "mentions_normalization"],
+    "t3": ["syntax_valid", "docstring_added", "no_body_change", "mentions_normalization", "mentions_empty", "mentions_same_value"]
+  },
+  "notes": "軽量モデル仮説の検証ケース。qwen3:8b-nothink が T2 を達成できるかを確認する。"
+}

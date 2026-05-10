@@ -1,0 +1,56 @@
+{
+  "task": "docstring_generate",
+  "checks": [
+    {
+      "id": "syntax_valid",
+      "description": "Pythonとして構文エラーがない",
+      "method": "compile"
+    },
+    {
+      "id": "docstring_added",
+      "description": "関数にdocstringが追加されている",
+      "method": "ast"
+    },
+    {
+      "id": "no_body_change",
+      "description": "関数本体を変更していない",
+      "method": "diff"
+    },
+    {
+      "id": "mentions_weights",
+      "description": "重み付き平均（weightsパラメータ）への言及がある",
+      "method": "string_match",
+      "keywords": ["weight", "weighted", "重み"]
+    },
+    {
+      "id": "mentions_pad_value",
+      "description": "min_periods未満の場合のpad_valueへの言及がある",
+      "method": "string_match",
+      "keywords": ["pad", "nan", "fill", "placeholder", "insufficient"]
+    },
+    {
+      "id": "mentions_min_periods",
+      "description": "min_periodsの挙動（デフォルト=window）への言及がある",
+      "method": "string_match",
+      "keywords": ["min_period", "minimum", "at least", "threshold", "required"]
+    },
+    {
+      "id": "mentions_empty",
+      "description": "空リスト入力への言及がある",
+      "method": "string_match",
+      "keywords": ["empty", "[]", "no values", "no elements", "空"]
+    },
+    {
+      "id": "mentions_weights_alignment",
+      "description": "weightsの右寄せアライメント（window未満時）への言及がある",
+      "method": "string_match",
+      "keywords": ["align", "right", "tail", "last", "truncat", "partial"]
+    }
+  ],
+  "scoring": {
+    "t1": ["syntax_valid", "docstring_added"],
+    "t2": ["syntax_valid", "docstring_added", "no_body_change", "mentions_weights", "mentions_pad_value"],
+    "t3": ["syntax_valid", "docstring_added", "no_body_change", "mentions_weights", "mentions_pad_value", "mentions_min_periods", "mentions_empty"]
+  },
+  "notes": "複雑な引数の組み合わせを持つ関数。min_periods/weights/pad_valueの非自明な動作を説明できるかを測る。T3のweights_alignmentは参考値（ボーナス指標）。"
+}

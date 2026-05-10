@@ -1,0 +1,37 @@
+{
+  "task": "type_annotate",
+  "checks": [
+    {
+      "id": "syntax_valid",
+      "description": "Pythonとして構文エラーがない",
+      "method": "compile"
+    },
+    {
+      "id": "annotations_added",
+      "description": "少なくとも1つの型アノテーションが追加されている",
+      "method": "ast_annotations"
+    },
+    {
+      "id": "no_body_change",
+      "description": "関数本体を変更していない",
+      "method": "diff"
+    },
+    {
+      "id": "has_return_type",
+      "description": "戻り値の型アノテーション（->）がある",
+      "method": "source_match",
+      "keywords": ["->"]
+    },
+    {
+      "id": "all_annotated",
+      "description": "全関数の全引数と戻り値に型アノテーションが付いている",
+      "method": "ast_all_annotated"
+    }
+  ],
+  "scoring": {
+    "t1": ["syntax_valid", "annotations_added"],
+    "t2": ["syntax_valid", "annotations_added", "no_body_change", "has_return_type"],
+    "t3": ["syntax_valid", "annotations_added", "no_body_change", "has_return_type", "all_annotated"]
+  },
+  "notes": "T2=本体を変えず戻り値型も付けられるか。T3=全関数・全引数・全戻り値を完全にアノテートできるか。"
+}

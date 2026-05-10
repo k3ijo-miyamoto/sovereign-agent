@@ -1,0 +1,73 @@
+{
+  "name": "sovereign-agent-vscode",
+  "displayName": "Sovereign Agent",
+  "description": "Local LLM coding assistant (Ollama / Anthropic)",
+  "version": "0.2.0",
+  "publisher": "local",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sovereignAgent.openChat",
+        "title": "Sovereign Agent: Open Chat"
+      }
+    ],
+    "configuration": {
+      "title": "Sovereign Agent",
+      "properties": {
+        "sovereignAgent.provider": {
+          "type": "string",
+          "enum": ["ollama", "anthropic"],
+          "default": "ollama",
+          "description": "LLM provider"
+        },
+        "sovereignAgent.baseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama base URL"
+        },
+        "sovereignAgent.model": {
+          "type": "string",
+          "default": "gemma3:12b",
+          "description": "Default text model"
+        },
+        "sovereignAgent.binaryPath": {
+          "type": "string",
+          "default": "auto",
+          "description": "Path to sovereign binary (auto = search workspace)"
+        },
+        "sovereignAgent.systemPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Additional system prompt appended to the default"
+        },
+        "sovereignAgent.taskModel.docstring": {
+          "type": "string",
+          "default": "",
+          "description": "Model for docstring tasks (empty = use default)"
+        },
+        "sovereignAgent.taskModel.tests": {
+          "type": "string",
+          "default": "",
+          "description": "Model for test generation (empty = use default)"
+        },
+        "sovereignAgent.taskModel.typeHints": {
+          "type": "string",
+          "default": "",
+          "description": "Model for type annotation tasks (empty = use default)"
+        },
+        "sovereignAgent.taskModel.commitMsg": {
+          "type": "string",
+          "default": "",
+          "description": "Model for commit message generation (empty = use default)"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
+  }
+}

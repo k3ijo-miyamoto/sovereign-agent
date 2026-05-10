@@ -1,0 +1,8 @@
+Read the diff in target_diff.txt and write a git commit message to commit_message.txt.
+
+Requirements:
+- The subject line (first line) must be 72 characters or fewer
+- The subject must start with an imperative verb (e.g., add, fix, update, refactor)
+- The message must describe what changed
+- If you add a body, separate it from the subject with a blank line
+- Do not add any explanation outside the commit message itself

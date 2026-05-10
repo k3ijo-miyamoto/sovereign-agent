@@ -1,0 +1,7 @@
+Write pytest unit tests for the `chunk` function in target.py.
+
+Requirements:
+- Save the tests to a new file called test_target.py in the same directory
+- Do NOT modify target.py
+- The tests must be runnable with: pytest test_target.py
+- Cover at minimum: normal splitting, empty list input, and ValueError when size <= 0

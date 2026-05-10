@@ -1,0 +1,15 @@
+[package]
+name = "ollama"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+common = { path = "../common" }
+tokio.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+futures.workspace = true
+anyhow.workspace = true
+async-trait.workspace = true
