@@ -50,7 +50,7 @@ fi
 
 echo "Running ${EVAL_SCRIPT} in Docker container (isolated)..."
 docker run --rm \
-  --network host \
+  --add-host host.docker.internal:host-gateway \
   --read-only \
   --tmpfs /tmp \
   --tmpfs /home/eval \
@@ -59,4 +59,4 @@ docker run --rm \
   -e SOVEREIGN_BIN=/usr/local/bin/sovereign \
   -v "${SOVEREIGN_BIN}:/usr/local/bin/sovereign:ro" \
   -v "${REPO_ROOT}/eval:/app/eval" \
-  "${IMAGE_NAME}" python3 "/app/eval/${EVAL_SCRIPT}" --base-url http://localhost:11434 "${PASSTHROUGH[@]}"
+  "${IMAGE_NAME}" "/app/eval/${EVAL_SCRIPT}" --base-url http://host.docker.internal:11434 "${PASSTHROUGH[@]}"
