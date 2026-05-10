@@ -2,7 +2,7 @@
   "name": "sovereign-agent-vscode",
   "displayName": "Sovereign Agent",
   "description": "Local LLM coding assistant (Ollama / Anthropic)",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "local",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
@@ -13,6 +13,18 @@
       {
         "command": "sovereignAgent.openChat",
         "title": "Sovereign Agent: Open Chat"
+      },
+      {
+        "command": "sovereignAgent.restart",
+        "title": "Sovereign Agent: Restart CLI"
+      },
+      {
+        "command": "sovereignAgent.stop",
+        "title": "Sovereign Agent: Stop"
+      },
+      {
+        "command": "sovereignAgent.clear",
+        "title": "Sovereign Agent: Clear Chat"
       }
     ],
     "configuration": {
@@ -63,6 +75,22 @@
           "type": "string",
           "default": "",
           "description": "Model for commit message generation (empty = use default)"
+        },
+        "sovereignAgent.allowedTools": {
+          "type": "string",
+          "default": "bash,read_file,write_file,list_files",
+          "description": "Comma-separated list of tools the agent is allowed to use"
+        },
+        "sovereignAgent.visionModel": {
+          "type": "string",
+          "default": "qwen2.5vl:7b",
+          "description": "Vision model for image analysis"
+        },
+        "sovereignAgent.searchEngine": {
+          "type": "string",
+          "enum": ["duckduckgo", "google", "bing"],
+          "default": "duckduckgo",
+          "description": "Web search engine"
         }
       }
     }

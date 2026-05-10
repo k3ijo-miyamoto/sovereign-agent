@@ -4,7 +4,8 @@ mod plain;
 use agent::{AgentLoop, History};
 use anyhow::Result;
 use common::ChatMessage;
-use tools::{all_tool_defs, LocalExecutor};
+use std::sync::Arc;
+use tools::{all_tool_defs, CombinedExecutor, load_mcp_config, McpServer};
 
 use args::Cli;
 
@@ -12,13 +13,48 @@ use args::Cli;
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    // --cwd でカレントディレクトリを変更
+    if let Some(ref cwd) = cli.cwd {
+        std::env::set_current_dir(cwd)?;
+    }
+
     let provider: Box<dyn common::ChatProvider> = match cli.provider.as_str() {
         "anthropic" => Box::new(anthropic::AnthropicClient::from_env()?),
         _ => Box::new(ollama::OllamaClient::new(&cli.base_url, &cli.model)),
     };
 
     let xml = provider.xml_mode();
-    let tool_defs = all_tool_defs();
+
+    // --allowed-tools でローカルツールをフィルタリング
+    let mut tool_defs = if let Some(ref allowed) = cli.allowed_tools {
+        let names: std::collections::HashSet<&str> =
+            allowed.split(',').map(|s| s.trim()).collect();
+        all_tool_defs()
+            .into_iter()
+            .filter(|t| names.contains(t.function.name.as_str()))
+            .collect()
+    } else {
+        all_tool_defs()
+    };
+
+    // MCP サーバーを起動してツール一覧を取得
+    let mcp_servers = init_mcp_servers().await;
+    for server in &mcp_servers {
+        for tool in &server.tools {
+            tool_defs.push(common::ToolDef {
+                kind: "function".into(),
+                function: common::ToolSpec {
+                    name: tool.name.clone(),
+                    description: tool.description.clone(),
+                    parameters: tool.input_schema.clone(),
+                },
+            });
+        }
+    }
+
+    let executor: Arc<dyn agent::ToolExecutor> =
+        Arc::new(CombinedExecutor::new(mcp_servers));
+
     let system = "\
 You are an autonomous coding assistant with access to tools. \
 You MUST use tools to complete tasks — never ask the user to provide file contents or run commands for you. \
@@ -30,20 +66,21 @@ Always act autonomously and complete the full task with tools before responding.
     let mut history = History::new(system);
     let agent = AgentLoop::new(provider, &cli.model, tool_defs);
 
+    // ビジョン設定（vision_model が指定されている場合のみ）
+    let vision = cli.vision_model.as_ref().map(|m| plain::VisionCfg {
+        base_url: cli.base_url.clone(),
+        model: m.clone(),
+    });
+
     if cli.plain_output {
-        // VS Code 拡張 / eval ハーネス向け JSON Lines モード
         if let Some(prompt) = cli.prompt {
-            // 単発実行: prompt サブコマンド
             history.push(ChatMessage::user(&prompt));
-            let executor = plain::PlainExecutor;
-            plain::run_once(&agent, &mut history, &executor).await?;
+            plain::run_once(&agent, &mut history, executor.as_ref()).await?;
         } else {
-            // 対話 plain モード (stdin から読む)
-            plain::run(agent, history, plain::PlainExecutor).await?;
+            plain::run(agent, history, executor, vision).await?;
         }
     } else {
-        // 通常の対話 REPL
-        repl::run(agent, history, LocalExecutor, &cli.model, &cli.provider, xml).await?;
+        repl::run(agent, history, executor, &cli.model, &cli.provider, xml).await?;
     }
 
     Ok(())
@@ -53,12 +90,12 @@ mod repl {
     use agent::{AgentLoop, History};
     use anyhow::Result;
     use common::ChatMessage;
-    use tools::LocalExecutor;
+    use std::sync::Arc;
 
     pub async fn run(
         agent: AgentLoop,
         mut history: History,
-        executor: LocalExecutor,
+        executor: Arc<dyn agent::ToolExecutor>,
         model: &str,
         provider: &str,
         xml: bool,
@@ -77,7 +114,7 @@ mod repl {
 
             history.push(ChatMessage::user(input));
             let mut on_text = |chunk: &str| { eprint!("{chunk}"); };
-            let outcome = agent.run_turn(&mut history, &executor, &mut on_text).await?;
+            let outcome = agent.run_turn(&mut history, executor.as_ref(), &mut on_text).await?;
             eprintln!();
             if outcome.tool_calls_executed > 0 {
                 eprintln!("[{} tool call(s) executed]", outcome.tool_calls_executed);
@@ -85,4 +122,19 @@ mod repl {
         }
         Ok(())
     }
+}
+
+async fn init_mcp_servers() -> Vec<Arc<McpServer>> {
+    let Some(cfg) = load_mcp_config() else { return vec![]; };
+    let mut servers = Vec::new();
+    for (name, server_cfg) in cfg.servers {
+        match McpServer::connect(name.clone(), &server_cfg).await {
+            Ok(server) => {
+                eprintln!("[MCP] {} に接続 ({} ツール)", name, server.tools.len());
+                servers.push(Arc::new(server));
+            }
+            Err(e) => eprintln!("[MCP] {} 接続失敗: {e}", name),
+        }
+    }
+    servers
 }

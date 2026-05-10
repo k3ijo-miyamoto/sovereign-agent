@@ -37,6 +37,9 @@ function get() {
             typeHints:  c.get('taskModel.typeHints',  ''),
             commitMsg:  c.get('taskModel.commitMsg',  ''),
         },
+        allowedTools: c.get('allowedTools', 'bash,read_file,write_file,list_files'),
+        visionModel:  c.get('visionModel',  'qwen2.5vl:7b'),
+        searchEngine: c.get('searchEngine', 'duckduckgo'),
     };
 }
 
@@ -54,6 +57,12 @@ async function save(values) {
         await c.update('taskModel.typeHints',  values.taskModel.typeHints  ?? '', vscode.ConfigurationTarget.Workspace);
         await c.update('taskModel.commitMsg',  values.taskModel.commitMsg  ?? '', vscode.ConfigurationTarget.Workspace);
     }
+    if (values.allowedTools !== undefined)
+        await c.update('allowedTools', values.allowedTools, vscode.ConfigurationTarget.Workspace);
+    if (values.visionModel !== undefined)
+        await c.update('visionModel',  values.visionModel,  vscode.ConfigurationTarget.Workspace);
+    if (values.searchEngine !== undefined)
+        await c.update('searchEngine', values.searchEngine, vscode.ConfigurationTarget.Global);
 }
 
 /** Ollama からモデル一覧を取得する */

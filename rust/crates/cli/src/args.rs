@@ -4,8 +4,10 @@ pub struct Cli {
     pub provider: String,
     pub base_url: String,
     pub plain_output: bool,
-    /// `prompt <text>` サブコマンド（単発実行）
     pub prompt: Option<String>,
+    pub cwd: Option<String>,
+    pub allowed_tools: Option<String>, // カンマ区切り
+    pub vision_model: Option<String>,
 }
 
 impl Cli {
@@ -22,6 +24,9 @@ impl Cli {
             std::env::var("OLLAMA_BASE_URL").unwrap_or_else(|_| "http://localhost:11434".into());
         let mut plain_output = false;
         let mut prompt: Option<String> = None;
+        let mut cwd: Option<String> = None;
+        let mut allowed_tools: Option<String> = None;
+        let mut vision_model: Option<String> = None;
 
         let mut i = 0;
         while i < raw.len() {
@@ -41,11 +46,22 @@ impl Cli {
                     i += 1;
                     if let Some(v) = raw.get(i) { base_url = v.clone(); }
                 }
+                "--cwd" => {
+                    i += 1;
+                    if let Some(v) = raw.get(i) { cwd = Some(v.clone()); }
+                }
+                "--allowed-tools" | "--allowedTools" => {
+                    i += 1;
+                    if let Some(v) = raw.get(i) { allowed_tools = Some(v.clone()); }
+                }
+                "--vision-model" => {
+                    i += 1;
+                    if let Some(v) = raw.get(i) { vision_model = Some(v.clone()); }
+                }
                 // eval ハーネス互換: 受け付けるが無視するフラグ
-                "--permission-mode" => { i += 1; } // 常に full access
+                "--permission-mode" => { i += 1; }
                 // `prompt <text>` サブコマンド
                 "prompt" => {
-                    // 残りの引数すべてをプロンプトとして結合
                     let rest = raw[i + 1..].join(" ");
                     prompt = Some(rest);
                     break;
@@ -55,6 +71,6 @@ impl Cli {
             i += 1;
         }
 
-        Self { model, provider, base_url, plain_output, prompt }
+        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model }
     }
 }

@@ -8,6 +8,7 @@ license.workspace = true
 common = { path = "../common" }
 agent  = { path = "../agent" }
 tokio.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true

@@ -1,0 +1,10 @@
+{
+    "sovereignAgent.model": "gemma3:27b",
+    "sovereignAgent.systemPrompt": "",
+    "sovereignAgent.taskModel.docstring": "",
+    "sovereignAgent.taskModel.tests": "",
+    "sovereignAgent.taskModel.typeHints": "",
+    "sovereignAgent.taskModel.commitMsg": "",
+    "sovereignAgent.allowedTools": "bash,read_file,write_file,list_files",
+    "sovereignAgent.visionModel": "qwen2.5vl:7b"
+}

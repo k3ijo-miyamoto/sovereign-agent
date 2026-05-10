@@ -140,6 +140,13 @@ class ChatController {
                 this._postWebview({ type: 'settings', settings: cfg, models });
                 break;
             }
+            case 'set_model': {
+                if (!msg.model) return;
+                const cfg = settings.get();
+                await settings.save({ ...cfg, model: msg.model });
+                this._startSession();
+                break;
+            }
             case 'save_settings': {
                 await settings.save(msg.settings);
                 this._startSession();
@@ -163,20 +170,22 @@ class ChatController {
 
     async _handleImage(msg) {
         if (!msg.images?.length) return;
-        try {
-            const imagePath = await saveWebviewImage(msg.images[0]);
-            const text = (msg.text || '').trim();
-            const prompt = text
-                ? 'Image saved at ' + imagePath + '. ' + text
-                : 'An image was saved at ' + imagePath + '. Please describe its contents.';
-            this._transcript.push({ role: 'user', text: prompt });
-            this._postWebview({ type: 'user', text: '[image] ' + (text || '画像を送信しました') });
-            this._postWebview({ type: 'thinking' });
-            this._status.update('busy');
-            this._session.send(prompt);
-        } catch (err) {
-            this._postWebview({ type: 'error', message: '画像の保存に失敗しました: ' + (err.message || err) });
-        }
+        const image = msg.images[0];
+        const text = (msg.text || '').trim();
+        const label = '[image] ' + (text || '画像を送信しました');
+
+        this._transcript.push({ role: 'user', text: label });
+        this._postWebview({ type: 'user', text: label });
+        this._postWebview({ type: 'thinking' });
+        this._status.update('busy');
+
+        // base64 を JSON Lines で直接 CLI に渡す（vision_model が使用される）
+        this._session.sendJson({
+            type: 'image_prompt',
+            text: text || 'この画像を日本語で説明してください。',
+            base64: image.base64,
+            mime: image.mime || 'image/png',
+        });
     }
 
     _handleEvent(evt) {

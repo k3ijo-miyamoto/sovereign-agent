@@ -1121,7 +1121,9 @@ dependencies = [
  "anyhow",
  "async-trait",
  "common",
+ "futures",
  "ollama",
+ "reqwest",
  "serde_json",
  "tokio",
  "tools",
@@ -1283,6 +1285,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "common",
+ "serde",
  "serde_json",
  "tokio",
 ]

@@ -1,6 +1,7 @@
 'use strict';
 const { spawn } = require('child_process');
 const { resolveBinary } = require('./binary');
+const { workspaceRoot } = require('./workspace');
 
 class Session {
     constructor(cfg, overrideModel, onEvent) {
@@ -9,6 +10,7 @@ class Session {
         this._onEvent = onEvent;
         this._proc = null;
         this._lineBuf = '';
+        this._disposed = false;
     }
 
     start() {
@@ -22,8 +24,14 @@ class Session {
             OLLAMA_BASE_URL:    this._cfg.baseUrl,
         };
 
-        this._proc = spawn(cmd, [...args, '--plain'], {
+        const cwd = workspaceRoot();
+        const cliArgs = [...args, '--cwd', cwd, '--plain'];
+        if (this._cfg.allowedTools) cliArgs.push('--allowed-tools', this._cfg.allowedTools);
+        if (this._cfg.visionModel)  cliArgs.push('--vision-model',  this._cfg.visionModel);
+
+        this._proc = spawn(cmd, cliArgs, {
             env,
+            cwd,
             stdio: ['pipe', 'pipe', 'pipe'],
         });
 
@@ -39,12 +47,13 @@ class Session {
         });
 
         this._proc.stderr.on('data', data => {
-            console.error('[sovereign]', data.toString().trim());
+            const text = data.toString().trim();
+            if (text) this._onEvent({ type: 'error', message: text });
         });
 
         this._proc.on('exit', code => {
             this._proc = null;
-            if (code !== 0) {
+            if (!this._disposed && code !== 0) {
                 this._onEvent({ type: 'error', message: `プロセスが終了しました (code=${code})` });
             }
         });
@@ -55,6 +64,11 @@ class Session {
         this._proc.stdin.write(text + '\n');
     }
 
+    sendJson(obj) {
+        if (!this._proc) this.start();
+        this._proc.stdin.write(JSON.stringify(obj) + '\n');
+    }
+
     /** 現在のターンを中断する（プロセスは維持） */
     stop() {
         if (this._proc) {
@@ -63,6 +77,7 @@ class Session {
     }
 
     dispose() {
+        this._disposed = true;
         if (this._proc) {
             try { this._proc.stdin.end(); } catch { /* ignore */ }
             try { this._proc.kill(); } catch { /* ignore */ }

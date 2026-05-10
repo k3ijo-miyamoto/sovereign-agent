@@ -81,6 +81,17 @@ body {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 #quick-tasks span { font-size: 0.82em; color: var(--vscode-descriptionForeground); }
+#model-group {
+  margin-left: auto; display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+#model-group label { font-size: 0.82em; color: var(--vscode-descriptionForeground); white-space: nowrap; }
+#main-model-select {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 3px; padding: 2px 4px; font: inherit; font-size: 0.82em;
+  max-width: 160px;
+}
 .task-btn {
   padding: 2px 10px; border-radius: 3px; border: 1px solid var(--vscode-button-border, #555);
   background: var(--vscode-button-secondaryBackground);
@@ -204,6 +215,25 @@ body {
       </label>
     </div>
 
+    <div class="settings-grid">
+      <label>Vision model
+        <input id="s-vision" type="text" placeholder="例: qwen2.5vl:7b">
+      </label>
+      <label>Search engine
+        <select id="s-search">
+          <option value="duckduckgo">DuckDuckGo</option>
+          <option value="google">Google</option>
+          <option value="bing">Bing</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="settings-full">
+      <label>Allowed tools (カンマ区切り)
+        <input id="s-tools" type="text" placeholder="bash,read_file,write_file,list_files">
+      </label>
+    </div>
+
     <div style="font-size:0.82em;color:var(--vscode-descriptionForeground);margin-bottom:4px;">
       タスク別モデル（空欄 = CLAUDE.md デフォルトを使用）
     </div>
@@ -225,6 +255,10 @@ body {
   <button class="task-btn" data-task="tests">🧪 Tests</button>
   <button class="task-btn" data-task="typeHints">🏷 Type hints</button>
   <button class="task-btn" data-task="commitMsg">💬 Commit msg</button>
+  <div id="model-group">
+    <label for="main-model-select">Model:</label>
+    <select id="main-model-select"><option value="">— loading —</option></select>
+  </div>
 </div>
 
 <!-- ── Messages ── -->
@@ -309,6 +343,9 @@ function applySettings(cfg, models) {
     document.getElementById('s-base-url').value  = cfg.baseUrl;
     document.getElementById('s-binary').value    = cfg.binaryPath;
     document.getElementById('s-system').value    = cfg.systemPrompt;
+    document.getElementById('s-vision').value    = cfg.visionModel  || '';
+    document.getElementById('s-search').value    = cfg.searchEngine || 'duckduckgo';
+    document.getElementById('s-tools').value     = cfg.allowedTools || 'bash,read_file,write_file,list_files';
 
     populateModelSelect(document.getElementById('s-model'), models, cfg.model);
     taskModelKeys.forEach(k => {
@@ -317,6 +354,12 @@ function applySettings(cfg, models) {
             cfg.taskModel ? (cfg.taskModel[k] || '') : ''
         );
     });
+
+    // populate the always-visible model selector
+    const mainSel = document.getElementById('main-model-select');
+    mainSel.innerHTML = models.length
+        ? models.map(m => '<option value="' + m + '"' + (m === cfg.model ? ' selected' : '') + '>' + m + '</option>').join('')
+        : '<option value="' + cfg.model + '" selected>' + cfg.model + '</option>';
 }
 
 document.getElementById('apply-btn').addEventListener('click', () => {
@@ -332,11 +375,21 @@ document.getElementById('apply-btn').addEventListener('click', () => {
             model:        document.getElementById('s-model').value,
             binaryPath:   document.getElementById('s-binary').value,
             systemPrompt: document.getElementById('s-system').value,
+            visionModel:  document.getElementById('s-vision').value,
+            searchEngine: document.getElementById('s-search').value,
+            allowedTools: document.getElementById('s-tools').value,
             taskModel,
         }
     });
     settingsBody.classList.remove('open');
     document.getElementById('settings-toggle').textContent = '▼ Settings';
+});
+
+// ── model selector ─────────────────────────────────
+document.getElementById('main-model-select').addEventListener('change', function() {
+    if (!this.value) return;
+    vscode.postMessage({ type: 'set_model', model: this.value });
+    addMsg('system', '— モデルを ' + this.value + ' に変更して再起動しました —');
 });
 
 // ── quick task buttons ─────────────────────────────
@@ -483,6 +536,8 @@ window.addEventListener('message', e => {
 });
 
 inputEl.focus();
+// fetch models on load so the selector is populated immediately
+vscode.postMessage({ type: 'get_settings' });
 </script>
 </body>
 </html>`;

@@ -18,3 +18,5 @@ tokio.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
+reqwest.workspace = true
+futures.workspace = true
