@@ -38,10 +38,15 @@ impl AgentLoop {
         executor: &dyn ToolExecutor,
         on_text: &mut dyn FnMut(&str),
     ) -> Result<TurnOutcome> {
+        const MAX_TOOL_CALLS: usize = 25;
         let mut total_tool_calls = 0;
         let mut call_counter = 0usize;
 
         loop {
+            if total_tool_calls >= MAX_TOOL_CALLS {
+                eprintln!("[tool call limit reached: {MAX_TOOL_CALLS}]");
+                return Ok(TurnOutcome { text: String::new(), tool_calls_executed: total_tool_calls });
+            }
             let messages = history.build_messages_with_suffix(self.xml_system_suffix.as_deref());
             let req = ChatRequest { model: self.model.clone(), messages, tools: self.tools.clone() };
             let mut stream = self.provider.chat_stream(req).await?;
