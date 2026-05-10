@@ -4,33 +4,51 @@
 # unintended bash commands are confined to the container's filesystem.
 #
 # Usage:
-#   ./eval/run_eval_docker.sh --model gemma3:27b [run_eval.py options...]
+#   ./eval/run_eval_docker.sh [--phase1] --model qwen3:8b [run_eval.py options...]
 #
 # Requirements:
 #   - Docker running
 #   - Ollama running on the host (localhost:11434)
-#   - claw binary built: cargo build -p rusty-claude-cli
+#   - sovereign binary built: cargo build -p sovereign
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CLAW_BIN="${REPO_ROOT}/rust/target/debug/claw"
-IMAGE_NAME="claw-eval"
+SOVEREIGN_BIN="${REPO_ROOT}/rust/target/debug/sovereign"
+IMAGE_NAME="sovereign-eval"
 
-if [[ ! -f "${CLAW_BIN}" ]]; then
-  echo "ERROR: claw binary not found at ${CLAW_BIN}"
-  echo "Build with: cargo build -p rusty-claude-cli"
+# --phase1 フラグを先に抜き出す
+PHASE1=false
+PASSTHROUGH=()
+for arg in "$@"; do
+  if [[ "${arg}" == "--phase1" ]]; then
+    PHASE1=true
+  else
+    PASSTHROUGH+=("${arg}")
+  fi
+done
+
+if [[ ! -f "${SOVEREIGN_BIN}" ]]; then
+  echo "ERROR: sovereign binary not found at ${SOVEREIGN_BIN}"
+  echo "Build with: cd rust && cargo build -p sovereign"
   exit 1
 fi
 
 # Build image if not present or if Dockerfile changed
 if ! docker image inspect "${IMAGE_NAME}" &>/dev/null || \
-   [[ "${REPO_ROOT}/eval/Dockerfile" -nt <(docker image inspect "${IMAGE_NAME}" --format '{{.Metadata.LastTagTime}}' 2>/dev/null || echo "") ]]; then
+   [[ "${REPO_ROOT}/eval/Dockerfile" -nt "${REPO_ROOT}/eval/.docker_build_stamp" ]]; then
   echo "Building Docker image ${IMAGE_NAME}..."
   docker build -t "${IMAGE_NAME}" "${REPO_ROOT}/eval"
+  touch "${REPO_ROOT}/eval/.docker_build_stamp"
 fi
 
-echo "Running eval in Docker container (isolated)..."
+if [[ "${PHASE1}" == true ]]; then
+  EVAL_SCRIPT="run_eval_phase1.py"
+else
+  EVAL_SCRIPT="run_eval.py"
+fi
+
+echo "Running ${EVAL_SCRIPT} in Docker container (isolated)..."
 docker run --rm \
   --network host \
   --read-only \
@@ -38,7 +56,7 @@ docker run --rm \
   --tmpfs /home/eval \
   --security-opt no-new-privileges \
   --cap-drop ALL \
-  -e CLAW_BIN=/usr/local/bin/claw \
-  -v "${CLAW_BIN}:/usr/local/bin/claw:ro" \
+  -e SOVEREIGN_BIN=/usr/local/bin/sovereign \
+  -v "${SOVEREIGN_BIN}:/usr/local/bin/sovereign:ro" \
   -v "${REPO_ROOT}/eval:/app/eval" \
-  "${IMAGE_NAME}" --base-url http://host.docker.internal:11434/v1 "$@"
+  "${IMAGE_NAME}" python3 "/app/eval/${EVAL_SCRIPT}" --base-url http://localhost:11434 "${PASSTHROUGH[@]}"

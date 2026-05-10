@@ -9,4 +9,4 @@ WORKDIR /app
 # eval/ directory is mounted at runtime for cases and results output
 
 USER eval
-ENTRYPOINT ["python3", "/app/eval/run_eval.py"]
+ENTRYPOINT ["python3"]

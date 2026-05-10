@@ -6,3 +6,4 @@ __pycache__/
 *.pem
 *.key
 .claude/sessions/
+eval/.docker_build_stamp
