@@ -87,13 +87,16 @@ rust/
 ```bash
 # 全モデル単回評価
 cd eval
-python3 run_eval.py
+python3 run_eval.py --model gemma3:27b --no-docker-warn
 
 # フェーズ1評価（非コード編集タスク）
-python3 run_eval_phase1.py
+python3 run_eval_phase1.py --model gemma3:27b --no-docker-warn
 
 # 安定性評価（3回ずつ実行）
-python3 run_eval.py --runs 3
+python3 run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
+
+# バイナリを明示する場合（リリースビルド等）
+SOVEREIGN_BIN=../rust/target/release/sovereign python3 run_eval.py --model qwen3:14b --no-docker-warn
 ```
 
 ### 評価結果サマリ（フェーズ2: 安定性評価）

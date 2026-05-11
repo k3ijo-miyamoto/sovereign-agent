@@ -1,6 +1,6 @@
 {
   "model": "qwen3:8b",
-  "provider": "openai-compatible",
+  "provider": "ollama",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -16,12 +16,12 @@
         "mentions_normalization": true,
         "syntax_valid": true
       },
-      "tool_call_count": 2.3,
+      "tool_call_count": 2.0,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 1.0,
+      "stability_rate": 0.6666666666666666,
       "error": null
     },
     {
@@ -64,7 +64,7 @@
         "mentions_empty": true,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 1.7,
+      "tool_call_count": 2.0,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
@@ -86,7 +86,7 @@
         "covers_empty": true,
         "covers_partial": false
       },
-      "tool_call_count": 3.0,
+      "tool_call_count": 1.3,
       "did_read": false,
       "did_edit": true,
       "did_verify": false,
@@ -97,22 +97,22 @@
     {
       "case": "04_type_annotate",
       "runs": 3,
-      "t1": true,
-      "t2": true,
-      "t3": true,
+      "t1": false,
+      "t2": false,
+      "t3": false,
       "checks": {
-        "syntax_valid": true,
-        "annotations_added": true,
-        "no_body_change": true,
+        "syntax_valid": false,
+        "annotations_added": false,
+        "no_body_change": false,
         "has_return_type": true,
-        "all_annotated": true
+        "all_annotated": false
       },
       "tool_call_count": 2.0,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 0.6666666666666666,
+      "stability_rate": 0.0,
       "error": null
     },
     {

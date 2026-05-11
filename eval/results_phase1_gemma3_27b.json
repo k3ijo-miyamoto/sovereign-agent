@@ -1,6 +1,6 @@
 {
   "model": "gemma3:27b",
-  "provider": "openai-compatible",
+  "provider": "ollama",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -16,12 +16,12 @@
         "mentions_normalization": true,
         "syntax_valid": true
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 1.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 1.0,
+      "stability_rate": 0.6666666666666666,
       "error": null
     },
     {
@@ -86,7 +86,7 @@
         "covers_empty": true,
         "covers_partial": false
       },
-      "tool_call_count": 3.0,
+      "tool_call_count": 2.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
@@ -128,11 +128,11 @@
         "subject_short": true,
         "mentions_parameter": true
       },
-      "tool_call_count": 2.7,
+      "tool_call_count": 2.0,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
-      "did_re_edit": true,
+      "did_re_edit": false,
       "stability_rate": 1.0,
       "error": null
     }

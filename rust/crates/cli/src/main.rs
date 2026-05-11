@@ -20,7 +20,14 @@ async fn main() -> Result<()> {
 
     let provider: Box<dyn common::ChatProvider> = match cli.provider.as_str() {
         "anthropic" => Box::new(anthropic::AnthropicClient::from_env()?),
-        _ => Box::new(ollama::OllamaClient::new(&cli.base_url, &cli.model)),
+        _ => {
+            // codestral / mistral-nemo 等は /v1/chat/completions (非ストリーミング) を使う
+            if ollama::OllamaCompatClient::is_compat_model(&cli.model) {
+                Box::new(ollama::OllamaCompatClient::new(&cli.base_url))
+            } else {
+                Box::new(ollama::OllamaClient::new(&cli.base_url, &cli.model))
+            }
+        }
     };
 
     let xml = provider.xml_mode();
@@ -56,12 +63,16 @@ async fn main() -> Result<()> {
         Arc::new(CombinedExecutor::new(mcp_servers));
 
     let system = "\
-You are an autonomous coding assistant with access to tools. \
-You MUST use tools to complete tasks — never ask the user to provide file contents or run commands for you. \
-When asked to modify a file: (1) use read_file to read it, (2) use write_file to write the updated version. \
-When asked about a directory: use list_files. \
-When you need to run code or shell commands: use bash. \
-Always act autonomously and complete the full task with tools before responding."
+You are an autonomous coding assistant with access to tools.\n\
+\n\
+Rules — follow all of them without exception:\n\
+1. Always use tools to act. Never ask the user to run commands or provide file contents.\n\
+2. To read a file: use read_file. To modify a file: read_file first, then write_file with the full updated content.\n\
+3. To run code or shell commands: use bash.\n\
+4. When code produces wrong or unexpected output, investigate the cause and fix it — never accept incorrect output.\n\
+5. Keep calling tools until the task is fully and verifiably complete. Never stop mid-task.\n\
+6. If an approach fails, try a different one. Do not give up.\n\
+7. Reply in the same language the user used."
         .to_string();
     let mut history = History::new(system);
     let agent = AgentLoop::new(provider, &cli.model, tool_defs);

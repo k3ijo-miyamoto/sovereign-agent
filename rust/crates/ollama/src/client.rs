@@ -87,14 +87,15 @@ fn parse_chunk(text: &str) -> Result<StreamEvent> {
     let resp: ChatResponse =
         serde_json::from_str(text).context("Ollama レスポンスのパース失敗")?;
 
-    if resp.done {
-        return Ok(StreamEvent::Done);
-    }
-
+    // tool_calls を done より先にチェック: Ollama は done=true のチャンクに tool_calls を乗せることがある
     if let Some(calls) = resp.message.tool_calls {
         if !calls.is_empty() {
             return Ok(StreamEvent::ToolCalls(wire_calls_to_common(calls)));
         }
+    }
+
+    if resp.done {
+        return Ok(StreamEvent::Done);
     }
 
     Ok(StreamEvent::Text(resp.message.content.unwrap_or_default()))
@@ -129,6 +130,20 @@ struct WireMessage {
     content: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     tool_call_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tool_calls: Option<Vec<WireOutgoingToolCall>>,
+}
+
+/// Ollama が assistant メッセージ中に期待する tool_calls の送信フォーマット
+#[derive(Serialize)]
+struct WireOutgoingToolCall {
+    function: WireOutgoingFunction,
+}
+
+#[derive(Serialize)]
+struct WireOutgoingFunction {
+    name: String,
+    arguments: serde_json::Value,
 }
 
 impl WireMessage {
@@ -140,7 +155,15 @@ impl WireMessage {
             common::Role::Tool      => "tool",
         }
         .to_string();
-        Self { role, content: m.content.clone(), tool_call_id: m.tool_call_id.clone() }
+        let tool_calls = m.tool_calls.as_ref().map(|calls| {
+            calls.iter().map(|c| WireOutgoingToolCall {
+                function: WireOutgoingFunction {
+                    name: c.name.clone(),
+                    arguments: c.arguments.clone(),
+                },
+            }).collect()
+        });
+        Self { role, content: m.content.clone(), tool_call_id: m.tool_call_id.clone(), tool_calls }
     }
 }
 
