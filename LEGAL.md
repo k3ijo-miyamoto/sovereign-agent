@@ -32,10 +32,11 @@ sovereign-agent の全 Rust コードは、claw-code/rust/ および claw-code/s
 
 | 機能 | claw-code/rust | sovereign-agent/rust |
 |---|---|---|
-| bash 実行 | 283行（サンドボックス・namespace隔離・バックグラウンド実行） | 29行（`bash -c cmd` のシンプルな実行） |
+| bash 実行 | 283行（サンドボックス・namespace隔離・バックグラウンド実行） | 57行（`bash -c cmd` のシンプルな実行） |
 | SSE パーサー | 128行（RFC準拠のステートマシン型増分パーサー） | 12行（`"data: "` を剥がすだけ） |
-| ツール数 | bash/glob/grep/read/write/edit 等 多数 | bash/read_file/write_file/list_files の4つ |
-| 追加機能 | MCP・OAuth・サンドボックス・セッション永続化・コンパクション | なし |
+| ツール数 | bash/glob/grep/read/write/edit 等 多数 + MCP・OAuth 等 | bash/read_file/write_file/list_files/grep_search/glob_search/edit_file の7つ |
+| MCP | フル実装（OAuth・プロセス管理・セッション永続化） | 最小実装（stdio プロセス起動・ツール一覧取得・呼び出しのみ） |
+| その他 | OAuth・サンドボックス・セッション永続化・コンパクション | なし |
 
 構造・規模・実装方針のいずれも別物であり、**実質的類似性（substantial similarity）はない**。
 
