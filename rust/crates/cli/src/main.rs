@@ -20,10 +20,11 @@ async fn main() -> Result<()> {
 
     // Phase A: タスク種別ルーティングのログ
     if let Some(ref task) = cli.task {
+        let source = if cli.task_auto_detected { "auto" } else { "--task" };
         if cli.model_from_task {
-            eprintln!("[routing] task={task} → model={}", cli.model);
+            eprintln!("[routing] task={task} ({source}) → model={}", cli.model);
         } else {
-            eprintln!("[routing] task={task} (model overridden by --model: {})", cli.model);
+            eprintln!("[routing] task={task} ({source}, model overridden by --model: {})", cli.model);
         }
     }
 

@@ -12,6 +12,8 @@ pub struct Cli {
     pub task: Option<String>,
     /// --task によってモデルが自動選択されたか（ログ表示用）
     pub model_from_task: bool,
+    /// ルールベース自動分類によってタスクが推定されたか（ログ表示用）
+    pub task_auto_detected: bool,
 }
 
 /// タスク種別からデフォルトモデルを返す（eval 実測ベース）
@@ -23,6 +25,33 @@ pub fn task_default_model(task: &str) -> Option<&'static str> {
         "bugfix"                       => Some("gemma3:27b"),
         _                              => None,
     }
+}
+
+/// プロンプトテキストからタスク種別をルールベースで推定する。
+/// 判定できない場合は None を返す（デフォルトモデルにフォールバック）。
+pub fn classify_task(prompt: &str) -> Option<&'static str> {
+    let lower = prompt.to_lowercase();
+    // 優先度順にマッチ（より具体的なものを先に）
+    if contains_any(&lower, &["type hint", "type annotation", "型アノテーション", "型ヒント", "型を付"]) {
+        return Some("type-annotate");
+    }
+    if contains_any(&lower, &["docstring", "ドキュメント", "説明を書", "document"]) {
+        return Some("docstring");
+    }
+    if contains_any(&lower, &["commit message", "コミットメッセージ", "コミットメッセ", "commit msg"]) {
+        return Some("commit-msg");
+    }
+    if contains_any(&lower, &["pytest", "unittest", "テストコード", "テストを書", "テストを生成", "test case", "write test", "generate test"]) {
+        return Some("test");
+    }
+    if contains_any(&lower, &["バグ", "bug", "エラー", "error", "修正して", "直して", "fix"]) {
+        return Some("bugfix");
+    }
+    None
+}
+
+fn contains_any(text: &str, keywords: &[&str]) -> bool {
+    keywords.iter().any(|kw| text.contains(kw))
 }
 
 impl Cli {
@@ -92,7 +121,18 @@ impl Cli {
             i += 1;
         }
 
-        // --task が指定されていて --model が明示されていない場合、タスクからモデルを選択する
+        // --task が未指定 かつ prompt が確定している場合、ルールベースで自動分類する
+        let mut task_auto_detected = false;
+        if task.is_none() && !model_explicit {
+            if let Some(ref p) = prompt {
+                if let Some(detected) = classify_task(p) {
+                    task = Some(detected.to_string());
+                    task_auto_detected = true;
+                }
+            }
+        }
+
+        // タスクが確定していて --model が明示されていない場合、タスクからモデルを選択する
         let model_from_task = !model_explicit;
         if let Some(ref t) = task {
             if !model_explicit {
@@ -102,6 +142,6 @@ impl Cli {
             }
         }
 
-        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model, task, model_from_task }
+        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model, task, model_from_task, task_auto_detected }
     }
 }
