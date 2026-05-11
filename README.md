@@ -3,6 +3,8 @@
 An agentic CLI for local LLMs (Ollama) and the Anthropic API.  
 A clean-room implementation aimed at realizing **Sovereign AI** — using LLMs without sending confidential code to external cloud services.
 
+Implemented from scratch referencing only publicly available documentation: the Ollama API, the Anthropic Messages API, the VS Code Extension API, and Rust library documentation. See [LEGAL.md](LEGAL.md) for details.
+
 ## Features
 
 - **Fully local execution** — Models run locally via Ollama. Your code never leaves the machine
@@ -184,6 +186,8 @@ MIT
 
 ローカルLLM（Ollama）および Anthropic API に対応したエージェントCLI。
 機密コードを外部クラウドに送らずにLLMを活用する **Sovereign AI** の実現を目的としたクリーンルーム実装。
+
+Ollama API・Anthropic Messages API・VS Code Extension API・Rust ライブラリの公開ドキュメントのみを参照してゼロから実装しています。詳細は [LEGAL.md](LEGAL.md) を参照。
 
 ## 特徴
 
