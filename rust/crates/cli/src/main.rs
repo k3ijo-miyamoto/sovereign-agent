@@ -19,24 +19,30 @@ async fn main() -> Result<()> {
         std::env::set_current_dir(cwd)?;
     }
 
+    let cwd = std::env::current_dir().unwrap_or_default();
+    let mut decision_reasons: Vec<String> = Vec::new();
+    let mut confidentiality_label: Option<String> = None;
+
     // Phase B: .sovereign-ai.yml による機密度チェック
     let effective_provider = if !cli.files.is_empty() {
-        let cwd = std::env::current_dir().unwrap_or_default();
         match routing::SovereignConfig::load(&cwd) {
             Some(cfg) => {
                 let level = cfg.classify(&cli.files, &cwd);
+                confidentiality_label = Some(format!("{level:?}"));
                 if level.requires_local() && cli.provider == "anthropic" {
                     eprintln!("[routing] confidentiality={level:?} → forcing local (ollama)");
+                    decision_reasons.push(format!("confidentiality={level:?} requires local"));
                     "ollama".to_string()
                 } else {
                     eprintln!("[routing] confidentiality={level:?} → provider={}", cli.provider);
+                    decision_reasons.push(format!("confidentiality={level:?} allows provider={}", cli.provider));
                     cli.provider.clone()
                 }
             }
             None => {
-                // 設定ファイルなし: 判定不能 → ローカル強制
                 if cli.provider == "anthropic" {
                     eprintln!("[routing] no .sovereign-ai.yml found → forcing local (ollama)");
+                    decision_reasons.push("no .sovereign-ai.yml → safe default: local".to_string());
                     "ollama".to_string()
                 } else {
                     cli.provider.clone()
@@ -52,10 +58,27 @@ async fn main() -> Result<()> {
         let source = if cli.task_auto_detected { "auto" } else { "--task" };
         if cli.model_from_task {
             eprintln!("[routing] task={task} ({source}) → model={}", cli.model);
+            decision_reasons.push(format!("task={task} ({source}) → model={}", cli.model));
         } else {
             eprintln!("[routing] task={task} ({source}, model overridden by --model: {})", cli.model);
+            decision_reasons.push(format!("task={task} ({source}), model explicitly set to {}", cli.model));
         }
     }
+
+    // Phase C: decision.jsonl に記録
+    let record = routing::DecisionRecord {
+        timestamp: routing::now_iso8601(),
+        files: cli.files.clone(),
+        task: cli.task.clone(),
+        task_source: cli.task.as_ref().map(|_| {
+            if cli.task_auto_detected { "auto".to_string() } else { "--task".to_string() }
+        }),
+        model: cli.model.clone(),
+        provider: effective_provider.clone(),
+        confidentiality: confidentiality_label,
+        reasons: decision_reasons,
+    };
+    routing::append_decision(&record, &cwd);
 
     let provider: Box<dyn common::ChatProvider> = match effective_provider.as_str() {
         "anthropic" => Box::new(anthropic::AnthropicClient::from_env()?),

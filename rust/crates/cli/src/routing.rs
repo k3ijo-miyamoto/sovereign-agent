@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -148,9 +148,90 @@ fn dirs_home() -> Option<PathBuf> {
     std::env::var("HOME").ok().map(PathBuf::from)
 }
 
+// ── Phase C: decision log ────────────────────────────────────────────────────
+
+/// ルーティング判定の記録（JSONL 1行分）
+#[derive(Debug, Serialize)]
+pub struct DecisionRecord {
+    pub timestamp: String,
+    pub files: Vec<String>,
+    pub task: Option<String>,
+    pub task_source: Option<String>, // "--task" | "auto"
+    pub model: String,
+    pub provider: String,
+    pub confidentiality: Option<String>,
+    pub reasons: Vec<String>,
+}
+
+/// `.sovereign/decisions.jsonl` に1行追記する。ディレクトリがなければ作成する。
+pub fn append_decision(record: &DecisionRecord, cwd: &Path) {
+    let dir = cwd.join(".sovereign");
+    if let Err(e) = std::fs::create_dir_all(&dir) {
+        eprintln!("[routing] decision log: failed to create dir: {e}");
+        return;
+    }
+    let path = dir.join("decisions.jsonl");
+    let line = match serde_json::to_string(record) {
+        Ok(s) => s,
+        Err(e) => { eprintln!("[routing] decision log: serialize error: {e}"); return; }
+    };
+    use std::io::Write;
+    match std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+        Ok(mut f) => { let _ = writeln!(f, "{line}"); }
+        Err(e) => eprintln!("[routing] decision log: write error: {e}"),
+    }
+}
+
+/// 標準ライブラリのみで ISO 8601 UTC タイムスタンプを生成する
+pub fn now_iso8601() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    unix_to_iso8601(secs)
+}
+
+fn unix_to_iso8601(secs: u64) -> String {
+    let s = (secs % 60) as u32;
+    let m = ((secs / 60) % 60) as u32;
+    let h = ((secs / 3600) % 24) as u32;
+    let mut days = (secs / 86400) as u32;
+
+    let mut year = 1970u32;
+    loop {
+        let dy = if is_leap(year) { 366 } else { 365 };
+        if days < dy { break; }
+        days -= dy;
+        year += 1;
+    }
+
+    let dims: [u32; 12] = [31, if is_leap(year) { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let mut month = 1u32;
+    for dim in dims {
+        if days < dim { break; }
+        days -= dim;
+        month += 1;
+    }
+    let day = days + 1;
+
+    format!("{year:04}-{month:02}-{day:02}T{h:02}:{m:02}:{s:02}Z")
+}
+
+fn is_leap(y: u32) -> bool {
+    (y % 4 == 0 && y % 100 != 0) || y % 400 == 0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_iso8601() {
+        assert_eq!(unix_to_iso8601(0),          "1970-01-01T00:00:00Z");
+        assert_eq!(unix_to_iso8601(1747008000), "2025-05-12T00:00:00Z");
+        assert_eq!(unix_to_iso8601(1778544000), "2026-05-12T00:00:00Z");
+    }
 
     #[test]
     fn test_glob_match() {
