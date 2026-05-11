@@ -18,6 +18,15 @@ async fn main() -> Result<()> {
         std::env::set_current_dir(cwd)?;
     }
 
+    // Phase A: タスク種別ルーティングのログ
+    if let Some(ref task) = cli.task {
+        if cli.model_from_task {
+            eprintln!("[routing] task={task} → model={}", cli.model);
+        } else {
+            eprintln!("[routing] task={task} (model overridden by --model: {})", cli.model);
+        }
+    }
+
     let provider: Box<dyn common::ChatProvider> = match cli.provider.as_str() {
         "anthropic" => Box::new(anthropic::AnthropicClient::from_env()?),
         _ => {

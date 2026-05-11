@@ -8,6 +8,21 @@ pub struct Cli {
     pub cwd: Option<String>,
     pub allowed_tools: Option<String>, // カンマ区切り
     pub vision_model: Option<String>,
+    /// --task で指定されたタスク種別（モデル自動選択に使用）
+    pub task: Option<String>,
+    /// --task によってモデルが自動選択されたか（ログ表示用）
+    pub model_from_task: bool,
+}
+
+/// タスク種別からデフォルトモデルを返す（eval 実測ベース）
+pub fn task_default_model(task: &str) -> Option<&'static str> {
+    match task {
+        "docstring" | "type-annotate" => Some("gemma3:12b"),
+        "test"                         => Some("qwen3:14b"),
+        "commit-msg"                   => Some("qwen3:8b-nothink"),
+        "bugfix"                       => Some("gemma3:27b"),
+        _                              => None,
+    }
 }
 
 impl Cli {
@@ -27,6 +42,8 @@ impl Cli {
         let mut cwd: Option<String> = None;
         let mut allowed_tools: Option<String> = None;
         let mut vision_model: Option<String> = None;
+        let mut task: Option<String> = None;
+        let mut model_explicit = false;
 
         let mut i = 0;
         while i < raw.len() {
@@ -36,7 +53,11 @@ impl Cli {
                 }
                 "--model" => {
                     i += 1;
-                    if let Some(v) = raw.get(i) { model = v.clone(); }
+                    if let Some(v) = raw.get(i) { model = v.clone(); model_explicit = true; }
+                }
+                "--task" => {
+                    i += 1;
+                    if let Some(v) = raw.get(i) { task = Some(v.clone()); }
                 }
                 "--provider" => {
                     i += 1;
@@ -71,6 +92,16 @@ impl Cli {
             i += 1;
         }
 
-        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model }
+        // --task が指定されていて --model が明示されていない場合、タスクからモデルを選択する
+        let model_from_task = !model_explicit;
+        if let Some(ref t) = task {
+            if !model_explicit {
+                if let Some(m) = task_default_model(t) {
+                    model = m.to_string();
+                }
+            }
+        }
+
+        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model, task, model_from_task }
     }
 }
