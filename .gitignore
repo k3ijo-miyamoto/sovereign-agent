@@ -7,3 +7,4 @@ __pycache__/
 *.key
 .claude/sessions/
 eval/.docker_build_stamp
+vscode-extension/*.vsix

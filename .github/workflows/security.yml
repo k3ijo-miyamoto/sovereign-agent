@@ -1,0 +1,44 @@
+name: Security
+
+on:
+  push:
+    paths:
+      - "rust/Cargo.lock"
+      - "rust/Cargo.toml"
+      - "rust/crates/**/Cargo.toml"
+      - "rust/deny.toml"
+      - ".github/workflows/security.yml"
+  schedule:
+    - cron: "0 2 * * 1"  # 毎週月曜 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: cargo audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+      - name: Run audit
+        run: cargo audit --file Cargo.lock
+
+  deny:
+    name: cargo deny
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: rust/Cargo.toml
+          command: check advisories licenses bans sources
