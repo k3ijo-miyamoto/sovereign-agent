@@ -15,8 +15,8 @@ from typing import Optional
 import os
 
 CASES_DIR = Path(__file__).parent / "cases"
-CLAW_BIN = Path(
-    os.environ.get("CLAW_BIN", Path(__file__).parent.parent / "rust" / "target" / "debug" / "claw")
+SOVEREIGN_BIN = Path(
+    os.environ.get("SOVEREIGN_BIN", Path(__file__).parent.parent / "rust" / "target" / "debug" / "sovereign")
 ).resolve()
 DEFAULT_TIMEOUT = 180
 
@@ -112,7 +112,7 @@ def run_once(
         original_content = target.read_text()
 
         cmd = [
-            str(CLAW_BIN),
+            str(SOVEREIGN_BIN),
             "--plain-output",
             "--permission-mode", "danger-full-access",
             "--provider", provider,
@@ -209,7 +209,7 @@ def safety_sym(val: bool) -> str:
 
 def _check_docker_warning(no_docker_warn: bool) -> None:
     """Warn when running outside Docker unless suppressed or already inside a container."""
-    in_container = os.path.exists("/.dockerenv") or os.environ.get("CLAW_BIN") is not None
+    in_container = os.path.exists("/.dockerenv") or os.environ.get("SOVEREIGN_BIN") is not None
     if in_container or no_docker_warn:
         return
     print(
@@ -230,8 +230,8 @@ def _check_docker_warning(no_docker_warn: bool) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run claw-code eval harness")
     parser.add_argument("--model", required=True)
-    parser.add_argument("--provider", default="openai-compatible")
-    parser.add_argument("--base-url", default="http://localhost:11434/v1")
+    parser.add_argument("--provider", default="ollama")
+    parser.add_argument("--base-url", default="http://localhost:11434")
     parser.add_argument("--cases", nargs="*")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT)
     parser.add_argument("--runs", type=int, default=1, help="Runs per case for stability")
@@ -241,8 +241,8 @@ def main() -> None:
 
     _check_docker_warning(args.no_docker_warn)
 
-    if not CLAW_BIN.exists():
-        print(f"ERROR: {CLAW_BIN} not found. Build with: cd rust && cargo build -p rusty-claude-cli", file=sys.stderr)
+    if not SOVEREIGN_BIN.exists():
+        print(f"ERROR: {SOVEREIGN_BIN} not found. Build with: cd rust && cargo build -p sovereign", file=sys.stderr)
         sys.exit(1)
 
     if args.cases:
@@ -252,13 +252,14 @@ def main() -> None:
     case_dirs = [d for d in case_dirs if (d / "meta.json").exists()]
 
     print(f"\nModel  : {args.model}")
-    print(f"Cases  : {len(case_dirs)}  Runs/case: {args.runs}  Timeout: {args.timeout}s\n")
+    print(f"Cases  : {len(case_dirs)}  Runs/case: {args.runs}  Timeout: {args.timeout}s (per-case override via meta.json)\n")
 
     results: list[CaseResult] = []
     for case_dir in case_dirs:
         meta = json.loads((case_dir / "meta.json").read_text())
+        case_timeout = meta.get("timeout", args.timeout)
         print(f"  {case_dir.name} ... ", end="", flush=True)
-        r = run_case(case_dir, args.model, args.provider, args.base_url, args.timeout, args.runs)
+        r = run_case(case_dir, args.model, args.provider, args.base_url, case_timeout, args.runs)
         results.append(r)
         s = r.summary()
         if s["error"]:
