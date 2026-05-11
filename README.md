@@ -161,6 +161,12 @@ Addition/generation tasks are evaluated against multiple criteria (AST checks, p
 
 For details, see [eval/summary_phase1.md](eval/summary_phase1.md) and [docs/sovereign-ai.md](docs/sovereign-ai.md).
 
+## Security
+
+- `unsafe_code = "forbid"` — unsafe blocks are banned across the entire workspace
+- Dependencies are pinned via `Cargo.lock`; only crates.io sources are permitted (`cargo deny`)
+- `cargo audit` and `cargo deny check` run automatically each week via GitHub Actions
+
 ## Build
 
 ```bash
@@ -350,6 +356,12 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 | `bugfix` | `gemma3:27b` | P0 安定性94% |
 
 詳細は [eval/summary_phase1.md](eval/summary_phase1.md) および [docs/sovereign-ai.md](docs/sovereign-ai.md) を参照。
+
+## セキュリティ
+
+- `unsafe_code = "forbid"` — ワークスペース全体で unsafe ブロックを禁止
+- 依存関係は `Cargo.lock` で固定済み。crates.io 以外のソースは `cargo deny` で拒否
+- `cargo audit` および `cargo deny check` を GitHub Actions で週次自動実行
 
 ## ビルド
 
