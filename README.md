@@ -45,7 +45,7 @@ rust/
     ├── ollama/      Ollama APIクライアント（ストリーミング・XMLモード対応）
     ├── anthropic/   Anthropic APIクライアント
     ├── agent/       エージェントループ（モデル非依存・ToolExecutor trait）
-    ├── tools/       ツール実装（bash / read_file / write_file / list_files）
+    ├── tools/       ツール実装（bash / read_file / write_file / list_files / grep_search / glob_search / edit_file）
     ├── common/      共有型定義
     └── cli/         REPLバイナリ（sovereign）
 ```
@@ -82,44 +82,65 @@ rust/
 
 ## 評価ハーネス
 
-`eval/` にローカルLLMの性能・安定性を定量評価するハーネスが含まれている。
+`eval/` に sovereign バイナリを使って複数のローカルLLMを定量比較するハーネスが含まれている。  
+**Phase 0**（バグ修正）と **Phase 1**（実務タスク）の2フェーズで 15 モデルを評価済み。
+
+### 評価の実施方法
 
 ```bash
-# 全モデル単回評価
-cd eval
-python3 run_eval.py --model gemma3:27b --no-docker-warn
+# Phase 0: バグ修正（6ケース）
+SOVEREIGN_BIN=../rust/target/debug/sovereign \
+  python3 eval/run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
 
-# フェーズ1評価（非コード編集タスク）
-python3 run_eval_phase1.py --model gemma3:27b --no-docker-warn
+# Phase 1: 実務タスク（docstring / テスト生成 / 型アノテーション / コミットメッセージ）
+SOVEREIGN_BIN=../rust/target/debug/sovereign \
+  python3 eval/run_eval_phase1.py --model gemma3:27b --runs 3 --no-docker-warn
 
-# 安定性評価（3回ずつ実行）
-python3 run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
-
-# バイナリを明示する場合（リリースビルド等）
-SOVEREIGN_BIN=../rust/target/release/sovereign python3 run_eval.py --model qwen3:14b --no-docker-warn
+# 特定ケースのみ再実行
+SOVEREIGN_BIN=../rust/target/debug/sovereign \
+  python3 eval/run_eval.py --model gemma3:27b --cases 04_boundary_bug --no-docker-warn
 ```
 
-### 評価結果サマリ（フェーズ2: 安定性評価）
+### ログ・結果の保存場所
 
-バグ修正6ケースを3回ずつ実行した安定性評価の結果:
+| パス | 内容 |
+|---|---|
+| `eval/results_<model>.json` | Phase 0 の各モデルごとの評価結果（自動生成） |
+| `eval/results_phase1_<model>.json` | Phase 1 の各モデルごとの評価結果（自動生成） |
+| `eval/summary.md` | Phase 0 の全モデル比較サマリ（`python3 eval/summarize.py` で自動生成） |
+| `eval/summary_phase1.md` | Phase 0 + Phase 1 の統合サマリ（手動更新） |
+| `.sovereign/decisions.jsonl` | sovereign 起動ごとのルーティング判定ログ（JSONL追記） |
 
-| モデル | 正解率 | 安定性 | サイズ |
-|---|:---:|:---:|---:|
-| **gemma3:27b** | 6/6 | 94% | 17.0GB |
-| **qwen3:14b** | 6/6 | 94% | 9.3GB |
-| qwen3:8b-nothink | 6/6 | 89% | 5.2GB |
-| qwen3:8b | 6/6 | 89% | — |
-| phi4:14b | 6/6 | 89% | — |
-| gemma3:12b | 5/6 | 78% | — |
-| codestral:22b | 5/6 | 67% | — |
-| devstral:24b | 5/6 | 67% | — |
+### 評価結果サマリ
 
-**推薦モデル:**
-- 精度・安定性最優先 → `gemma3:27b`
-- バランス重視 → `qwen3:14b`（9.3GB、精度・安定性ともに最高水準）
-- 軽量環境（〜5GB） → `qwen3:8b-nothink`
+**実用に耐えるモデル（Phase 0 + Phase 1 両立）:**
 
-詳細は [eval/summary.md](eval/summary.md) を参照。
+| モデル | P0 正解率 | P0 安定性 | P1 正解率 | サイズ |
+|---|:---:|:---:|:---:|---:|
+| **gemma3:27b** | 5/6 | 94% | 6/6 | 17GB |
+| **qwen3:14b** | 5/6 | 94% | 6/6 | 9.3GB |
+| **gemma3:12b** | 5/6 | 78% | 6/6 | 8GB |
+| qwen3:8b-nothink | 6/6 | 89% | 5/6 | 5.2GB |
+| qwen3:8b | 6/6 | 89% | 5/6 | 5.2GB |
+
+> P0 = バグ修正6ケース、P1 = docstring・テスト生成・型アノテーション・コミットメッセージ4タスク
+
+**主な知見:**
+
+- **コード特化モデルが必ずしも勝たない** — `codestral:22b` / `devstral:24b` はエージェント用途での安定性が67%にとどまった
+- **gemma3:12b はコスト最優** — docstring・テスト生成・型アノテーションでは 27b と同等スコアを 8GB で達成
+- **boundary_bug はほぼ全モデルの壁** — フィボナッチの off-by-one を突破できたのは qwen3 系のみ
+
+**タスク別推奨モデル（`--task` フラグで自動選択される）:**
+
+| `--task` | 推奨モデル | 根拠 |
+|---|---|---|
+| `docstring` / `type-annotate` | `gemma3:12b` | P1全冠・calls最少 |
+| `test` | `qwen3:14b` | P1全冠・安定性高 |
+| `commit-msg` | `qwen3:8b-nothink` | 軽量・stab=100% |
+| `bugfix` | `gemma3:27b` | P0 安定性94% |
+
+詳細は [eval/summary_phase1.md](eval/summary_phase1.md) および [docs/sovereign-ai.md](docs/sovereign-ai.md) を参照。
 
 ## ビルド
 
