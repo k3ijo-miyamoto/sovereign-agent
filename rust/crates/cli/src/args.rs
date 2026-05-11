@@ -14,6 +14,8 @@ pub struct Cli {
     pub model_from_task: bool,
     /// ルールベース自動分類によってタスクが推定されたか（ログ表示用）
     pub task_auto_detected: bool,
+    /// --file で指定された対象ファイルパス（機密度判定に使用・複数指定可）
+    pub files: Vec<String>,
 }
 
 /// タスク種別からデフォルトモデルを返す（eval 実測ベース）
@@ -73,6 +75,7 @@ impl Cli {
         let mut vision_model: Option<String> = None;
         let mut task: Option<String> = None;
         let mut model_explicit = false;
+        let mut files: Vec<String> = Vec::new();
 
         let mut i = 0;
         while i < raw.len() {
@@ -87,6 +90,10 @@ impl Cli {
                 "--task" => {
                     i += 1;
                     if let Some(v) = raw.get(i) { task = Some(v.clone()); }
+                }
+                "--file" => {
+                    i += 1;
+                    if let Some(v) = raw.get(i) { files.push(v.clone()); }
                 }
                 "--provider" => {
                     i += 1;
@@ -142,6 +149,6 @@ impl Cli {
             }
         }
 
-        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model, task, model_from_task, task_auto_detected }
+        Self { model, provider, base_url, plain_output, prompt, cwd, allowed_tools, vision_model, task, model_from_task, task_auto_detected, files }
     }
 }

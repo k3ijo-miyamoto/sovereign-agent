@@ -1,5 +1,6 @@
 mod args;
 mod plain;
+mod routing;
 
 use agent::{AgentLoop, History};
 use anyhow::Result;
@@ -18,6 +19,34 @@ async fn main() -> Result<()> {
         std::env::set_current_dir(cwd)?;
     }
 
+    // Phase B: .sovereign-ai.yml による機密度チェック
+    let effective_provider = if !cli.files.is_empty() {
+        let cwd = std::env::current_dir().unwrap_or_default();
+        match routing::SovereignConfig::load(&cwd) {
+            Some(cfg) => {
+                let level = cfg.classify(&cli.files, &cwd);
+                if level.requires_local() && cli.provider == "anthropic" {
+                    eprintln!("[routing] confidentiality={level:?} → forcing local (ollama)");
+                    "ollama".to_string()
+                } else {
+                    eprintln!("[routing] confidentiality={level:?} → provider={}", cli.provider);
+                    cli.provider.clone()
+                }
+            }
+            None => {
+                // 設定ファイルなし: 判定不能 → ローカル強制
+                if cli.provider == "anthropic" {
+                    eprintln!("[routing] no .sovereign-ai.yml found → forcing local (ollama)");
+                    "ollama".to_string()
+                } else {
+                    cli.provider.clone()
+                }
+            }
+        }
+    } else {
+        cli.provider.clone()
+    };
+
     // Phase A: タスク種別ルーティングのログ
     if let Some(ref task) = cli.task {
         let source = if cli.task_auto_detected { "auto" } else { "--task" };
@@ -28,7 +57,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    let provider: Box<dyn common::ChatProvider> = match cli.provider.as_str() {
+    let provider: Box<dyn common::ChatProvider> = match effective_provider.as_str() {
         "anthropic" => Box::new(anthropic::AnthropicClient::from_env()?),
         _ => {
             // codestral / mistral-nemo 等は /v1/chat/completions (非ストリーミング) を使う
@@ -101,7 +130,7 @@ Rules — follow all of them without exception:\n\
             plain::run(agent, history, executor, vision).await?;
         }
     } else {
-        repl::run(agent, history, executor, &cli.model, &cli.provider, xml).await?;
+        repl::run(agent, history, executor, &cli.model, &effective_provider, xml).await?;
     }
 
     Ok(())
