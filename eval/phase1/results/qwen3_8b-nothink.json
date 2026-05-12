@@ -1,6 +1,12 @@
 {
   "model": "qwen3:8b-nothink",
   "provider": "ollama",
+  "evaluated_at": "2026-05-12T16:16:27.127763+09:00",
+  "runs_per_case": 3,
+  "timeout_sec": 180,
+  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
+  "sovereign_git": "38d26e4",
+  "ollama_version": "ollama version is 0.23.1",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -16,12 +22,12 @@
         "mentions_normalization": true,
         "syntax_valid": true
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 1.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 1.0,
+      "stability_rate": 0.6666666666666666,
       "error": null
     },
     {
@@ -40,12 +46,12 @@
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 1.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 1.0,
+      "stability_rate": 0.6666666666666666,
       "error": null
     },
     {
@@ -64,7 +70,7 @@
         "mentions_empty": true,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 2.5,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
@@ -91,7 +97,7 @@
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 0.6666666666666666,
+      "stability_rate": 1.0,
       "error": null
     },
     {

@@ -1,6 +1,12 @@
 {
   "model": "devstral:24b",
   "provider": "ollama",
+  "evaluated_at": "2026-05-12T17:09:27.438862+09:00",
+  "runs_per_case": 3,
+  "timeout_sec": 180,
+  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
+  "sovereign_git": "38d26e4",
+  "ollama_version": "ollama version is 0.23.1",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -16,12 +22,12 @@
         "mentions_normalization": true,
         "syntax_valid": true
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 1.3,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 0.6666666666666666,
+      "stability_rate": 0.3333333333333333,
       "error": null
     },
     {
@@ -40,12 +46,12 @@
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 1.3,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 1.0,
+      "stability_rate": 0.3333333333333333,
       "error": null
     },
     {
@@ -64,12 +70,12 @@
         "mentions_empty": true,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 1.3,
+      "tool_call_count": 1.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 0.3333333333333333,
+      "stability_rate": 0.6666666666666666,
       "error": null
     },
     {
@@ -86,7 +92,7 @@
         "covers_empty": true,
         "covers_partial": false
       },
-      "tool_call_count": 2.3,
+      "tool_call_count": 3.3,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
@@ -107,7 +113,7 @@
         "has_return_type": true,
         "all_annotated": true
       },
-      "tool_call_count": 1.7,
+      "tool_call_count": 2.0,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
@@ -118,22 +124,22 @@
     {
       "case": "05_commit_message",
       "runs": 3,
-      "t1": false,
-      "t2": false,
-      "t3": false,
+      "t1": true,
+      "t2": true,
+      "t3": true,
       "checks": {
-        "file_created": false,
-        "has_verb": false,
-        "mentions_change": false,
-        "subject_short": false,
-        "mentions_parameter": false
+        "file_created": true,
+        "has_verb": true,
+        "mentions_change": true,
+        "subject_short": true,
+        "mentions_parameter": true
       },
-      "tool_call_count": 1.0,
+      "tool_call_count": 2.0,
       "did_read": true,
-      "did_edit": false,
+      "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 0.0,
+      "stability_rate": 1.0,
       "error": null
     }
   ]

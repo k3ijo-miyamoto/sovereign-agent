@@ -3,11 +3,13 @@
 
 import argparse
 import json
+import re
 from datetime import date
 from pathlib import Path
 
 EVAL_DIR = Path(__file__).parent
 CASES_DIR = EVAL_DIR / "cases"
+README_PATH = Path(__file__).parent.parent.parent / "README.md"
 
 MODEL_SIZES: dict[str, float] = {
     "gemma3:4b": 3.3,
@@ -173,6 +175,50 @@ def generate_checks_detail(all_results: list[dict], case_dirs: list[str], top_n:
     return lines
 
 
+def _readme_p1_table(all_results: list[dict], case_dirs: list[str]) -> str:
+    stats = [model_stats(e, case_dirs) for e in all_results]
+    n = len(case_dirs)
+    top = sorted(
+        [s for s in stats if s["n"] > 0 and s["t2"] > n // 2],
+        key=lambda s: (s["t2"], s["avg_stab"] or 0),
+        reverse=True,
+    )[:8]
+
+    docstring_count = sum(1 for c in case_dirs if "docstring" in c)
+    lines = [
+        f"> docstring 追加は{docstring_count}サブケース（単純・複雑・ヒント付き）に分けて評価。他タスクは各1ケース。",
+        "",
+        "| モデル | ケース通過 | サイズ |",
+        "|---|:---:|---:|",
+    ]
+
+    for s in top:
+        size = MODEL_SIZES.get(s["model"], "?")
+        name = f"**{s['model']}**" if s["t2"] == n else s["model"]
+        lines.append(f"| {name} | {s['t2']}/{n} | {size}GB |")
+
+    return "\n".join(lines)
+
+
+def _replace_readme_section(readme_path: Path, marker: str, new_content: str) -> bool:
+    text = readme_path.read_text()
+    pattern = re.compile(
+        rf"(<!-- {re.escape(marker)}-start -->)\n.*?\n(<!-- {re.escape(marker)}-end -->)",
+        re.DOTALL,
+    )
+    if not pattern.search(text):
+        print(f"Warning: marker '{marker}' not found in {readme_path}")
+        return False
+    updated = pattern.sub(rf"\1\n{new_content}\n\2", text)
+    readme_path.write_text(updated)
+    return True
+
+
+def update_readme_p1(readme_path: Path, all_results: list[dict], case_dirs: list[str]) -> None:
+    ok = _replace_readme_section(readme_path, "eval-p1", _readme_p1_table(all_results, case_dirs))
+    print(f"README Phase 1 updated: {ok}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize Phase 1 eval results")
     parser.add_argument("--output", "-o", help="Write Markdown to this file (default: stdout)")
@@ -182,6 +228,16 @@ def main() -> None:
         help="Directory containing *.json result files",
     )
     parser.add_argument("--top", type=int, default=4, help="Number of models in checks detail (default: 4)")
+    parser.add_argument(
+        "--update-readme",
+        action="store_true",
+        help="Update Phase 1 tables in README.md",
+    )
+    parser.add_argument(
+        "--readme",
+        default=str(README_PATH),
+        help="Path to README.md (default: project root)",
+    )
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
@@ -220,6 +276,9 @@ def main() -> None:
         print(f"Written to {args.output}")
     else:
         print(output)
+
+    if args.update_readme:
+        update_readme_p1(Path(args.readme), all_results, case_dirs)
 
 
 if __name__ == "__main__":

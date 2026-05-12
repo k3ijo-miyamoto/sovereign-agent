@@ -1,6 +1,12 @@
 {
   "model": "gemma3:4b",
   "provider": "ollama",
+  "evaluated_at": "2026-05-12T16:04:54.220326+09:00",
+  "runs_per_case": 3,
+  "timeout_sec": 180,
+  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
+  "sovereign_git": "38d26e4",
+  "ollama_version": "ollama version is 0.23.1",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -16,11 +22,11 @@
         "mentions_normalization": false,
         "syntax_valid": true
       },
-      "tool_call_count": 2.0,
-      "did_read": false,
-      "did_edit": false,
+      "tool_call_count": 5.3,
+      "did_read": true,
+      "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
+      "did_re_edit": true,
       "stability_rate": 0.0,
       "error": null
     },
@@ -40,11 +46,11 @@
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 1.0,
+      "tool_call_count": 2.3,
       "did_read": false,
-      "did_edit": false,
+      "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
+      "did_re_edit": true,
       "stability_rate": 0.0,
       "error": null
     },
@@ -64,11 +70,11 @@
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 2.7,
-      "did_read": true,
-      "did_edit": false,
+      "tool_call_count": 9.3,
+      "did_read": false,
+      "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
+      "did_re_edit": true,
       "stability_rate": 0.0,
       "error": null
     },
@@ -107,7 +113,7 @@
         "has_return_type": false,
         "all_annotated": false
       },
-      "tool_call_count": 3.3,
+      "tool_call_count": 0.0,
       "did_read": false,
       "did_edit": false,
       "did_verify": false,
@@ -128,12 +134,12 @@
         "subject_short": true,
         "mentions_parameter": true
       },
-      "tool_call_count": 2.3,
+      "tool_call_count": 6.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
-      "stability_rate": 0.3333333333333333,
+      "did_re_edit": true,
+      "stability_rate": 1.0,
       "error": null
     }
   ]

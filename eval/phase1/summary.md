@@ -10,40 +10,40 @@
 
 | モデル | T2 | T3 | avg calls | stab(avg) | 特記 |
 |---|:---:|:---:|:---:|:---:|---|
-| gemma3:27b | **6/6** | 5/6 | 2.1 | 94% | 全冠 |
-| gemma3:12b | **6/6** | 5/6 | 1.8 | 89% | 全冠 |
-| qwen3:14b | **6/6** | 5/6 | 1.9 | 78% | 全冠 |
-| qwen2.5-coder:14b | **6/6** | 4/6 | 2.7 | 78% | 全冠 |
-| qwen3:8b-nothink | **5/6** | 4/6 | 1.8 | 78% |  |
-| qwen3:8b | **5/6** | 4/6 | 1.9 | 72% |  |
-| devstral:24b | **5/6** | 4/6 | 1.7 | 56% |  |
-| phi4:14b | **5/6** | 4/6 | 1.8 | 39% |  |
-| deepseek-coder-v2:16b | **3/6** | 2/6 | 1.6 | 33% |  |
-| qwen2.5:7b | **2/6** | 2/6 | 2.1 | 33% |  |
-| codestral:22b | **1/6** | 1/6 | 1.6 | 11% |  |
-| gemma3:4b | **1/6** | 1/6 | 1.9 | 6% |  |
-| llama3.1:8b | **1/6** | 1/6 | 4.1 | 6% |  |
-| mistral-nemo:12b | **1/6** | 1/6 | 1.1 | 6% |  |
+| gemma3:12b | **6/6** | 5/6 | 2.1 | 100% | 全冠 |
+| gemma3:27b | **6/6** | 5/6 | 2.2 | 89% | 全冠 |
+| qwen3:14b | **6/6** | 5/6 | 2.1 | 83% | 全冠 |
+| qwen3:8b | **6/6** | 5/6 | 1.9 | 75% | 全冠 |
+| qwen2.5-coder:14b | **6/6** | 4/6 | 2.7 | 72% | 全冠 |
+| devstral:24b | **6/6** | 5/6 | 1.9 | 61% | 全冠 |
+| phi4:14b | **6/6** | 5/6 | 2.3 | 50% | 全冠 |
+| qwen3:8b-nothink | **5/6** | 4/6 | 1.8 | 72% |  |
+| qwen2.5:7b | **4/6** | 3/6 | 3.3 | 39% |  |
+| deepseek-coder-v2:16b | **3/6** | 1/6 | 1.7 | 33% |  |
+| codestral:22b | **2/6** | 0/6 | 2.4 | 11% |  |
+| gemma3:4b | **1/6** | 1/6 | 3.9 | 17% |  |
+| mistral-nemo:12b | **1/6** | 1/6 | 2.5 | 17% |  |
+| llama3.1:8b | **1/6** | 1/6 | 2.7 | 6% |  |
 | granite3.3:8b | **0/6** | 0/6 | 0.0 | 0% | 実用不可 |
 
 ## ケース別 T2 結果
 
 | モデル | docstring_generate | 02_docstring_complex | 02b_docstring_complex | test_generate | type_annotate | commit_message |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| gemma3:12b | ✅100% | ✅100% | ✅67% | ✅67% | ✅100% | ✅100% |
-| gemma3:27b | ✅67% | ✅100% | ✅100% | ✅100% | ✅100% | ✅100% |
-| qwen2.5-coder:14b | ✅100% | ✅33% | ✅67% | ✅67% | ✅100% | ✅100% |
-| qwen3:14b | ✅100% | ✅33% | ✅67% | ✅67% | ✅100% | ✅100% |
-| devstral:24b | ✅67% | ✅100% | ✅33% | ✅67% | ✅67% | ❌ |
-| phi4:14b | ✅33% | ✅33% | ✅33% | ✅33% | ❌ | ✅100% |
-| qwen3:8b-nothink | ✅100% | ✅100% | ✅100% | ✅67% | ❌ | ✅100% |
-| qwen3:8b | ✅67% | ✅100% | ✅67% | ✅100% | ❌ | ✅100% |
-| deepseek-coder-v2:16b | ✅33% | ❌ | ❌ | ❌ | ✅100% | ✅67% |
-| qwen2.5:7b | ❌ | ❌ | ❌ | ❌ | ✅100% | ✅100% |
-| codestral:22b | ❌ | ❌ | ❌ | ❌ | ❌ | ✅67% |
-| gemma3:4b | ❌ | ❌ | ❌ | ❌ | ❌ | ✅33% |
-| llama3.1:8b | ❌ | ❌ | ❌ | ✅33% | ❌ | ❌ |
-| mistral-nemo:12b | ❌ | ❌ | ❌ | ❌ | ❌ | ✅33% |
+| devstral:24b | ✅33% | ✅33% | ✅67% | ✅67% | ✅67% | ✅100% |
+| gemma3:12b | ✅100% | ✅100% | ✅100% | ✅100% | ✅100% | ✅100% |
+| gemma3:27b | ✅33% | ✅100% | ✅100% | ✅100% | ✅100% | ✅100% |
+| phi4:14b | ✅33% | ✅33% | ✅67% | ✅33% | ✅33% | ✅100% |
+| qwen2.5-coder:14b | ✅33% | ✅33% | ✅67% | ✅100% | ✅100% | ✅100% |
+| qwen3:14b | ✅100% | ✅67% | ✅67% | ✅67% | ✅100% | ✅100% |
+| qwen3:8b | ✅100% | ✅33% | ✅67% | ✅100% | ✅50% | ✅100% |
+| qwen3:8b-nothink | ✅67% | ✅67% | ✅100% | ✅100% | ❌ | ✅100% |
+| qwen2.5:7b | ❌ | ✅33% | ❌ | ✅33% | ✅67% | ✅100% |
+| deepseek-coder-v2:16b | ✅33% | ❌ | ❌ | ❌ | ✅67% | ✅100% |
+| codestral:22b | ✅33% | ❌ | ❌ | ❌ | ❌ | ✅33% |
+| gemma3:4b | ❌ | ❌ | ❌ | ❌ | ❌ | ✅100% |
+| llama3.1:8b | ❌ | ❌ | ❌ | ❌ | ❌ | ✅33% |
+| mistral-nemo:12b | ❌ | ❌ | ❌ | ❌ | ❌ | ✅100% |
 | granite3.3:8b | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 > ✅ = T2通過（安定性）、❌ = T2失敗
@@ -52,18 +52,18 @@
 
 ### docstring_generate
 
-| check | 説明 | T2必須 | gemma3:12b | gemma3:27b | qwen2.5-coder:14b | qwen3:14b |
+| check | 説明 | T2必須 | devstral:24b | gemma3:12b | gemma3:27b | phi4:14b |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | `no_body_change` | 関数本体を変更していない | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `docstring_added` | docstringが追加されている | ✓ | ✅ | ✅ | ✅ | ✅ |
-| `mentions_empty` | 空リストの挙動に触れている |  | ✅ | ✅ | ❌ | ✅ |
+| `mentions_empty` | 空リストの挙動に触れている |  | ✅ | ✅ | ✅ | ✅ |
 | `mentions_same_value` | 全要素同一の場合（0.0返却）に触れている |  | ✅ | ✅ | ✅ | ✅ |
 | `mentions_normalization` | 0〜1正規化であることを説明している | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `syntax_valid` | Pythonとして構文エラーがない | ✓ | ✅ | ✅ | ✅ | ✅ |
 
 ### 02_docstring_complex
 
-| check | 説明 | T2必須 | gemma3:12b | gemma3:27b | qwen2.5-coder:14b | qwen3:14b |
+| check | 説明 | T2必須 | devstral:24b | gemma3:12b | gemma3:27b | phi4:14b |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | `syntax_valid` | Pythonとして構文エラーがない | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `docstring_added` | 関数にdocstringが追加されている | ✓ | ✅ | ✅ | ✅ | ✅ |
@@ -76,7 +76,7 @@
 
 ### 02b_docstring_complex
 
-| check | 説明 | T2必須 | gemma3:12b | gemma3:27b | qwen2.5-coder:14b | qwen3:14b |
+| check | 説明 | T2必須 | devstral:24b | gemma3:12b | gemma3:27b | phi4:14b |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | `syntax_valid` | Pythonとして構文エラーがない | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `docstring_added` | 関数にdocstringが追加されている | ✓ | ✅ | ✅ | ✅ | ✅ |
@@ -89,18 +89,18 @@
 
 ### test_generate
 
-| check | 説明 | T2必須 | gemma3:12b | gemma3:27b | qwen2.5-coder:14b | qwen3:14b |
+| check | 説明 | T2必須 | devstral:24b | gemma3:12b | gemma3:27b | phi4:14b |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | `test_file_created` | test_target.pyが作成されている | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `target_unchanged` | target.pyを変更していない | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `pytest_pass` | pytest test_target.py が全テスト通過（exit 0） | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `covers_error` | size<=0のValueErrorテストがある |  | ✅ | ✅ | ✅ | ✅ |
 | `covers_empty` | 空リスト入力のテストがある |  | ✅ | ✅ | ✅ | ✅ |
-| `covers_partial` | 末尾の余りchunkのテストがある |  | ❌ | ❌ | ❌ | ❌ |
+| `covers_partial` | 末尾の余りchunkのテストがある |  | ❌ | ✅ | ❌ | ❌ |
 
 ### type_annotate
 
-| check | 説明 | T2必須 | gemma3:12b | gemma3:27b | qwen2.5-coder:14b | qwen3:14b |
+| check | 説明 | T2必須 | devstral:24b | gemma3:12b | gemma3:27b | phi4:14b |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | `syntax_valid` | Pythonとして構文エラーがない | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `annotations_added` | 少なくとも1つの型アノテーションが追加されている | ✓ | ✅ | ✅ | ✅ | ✅ |
@@ -110,7 +110,7 @@
 
 ### commit_message
 
-| check | 説明 | T2必須 | gemma3:12b | gemma3:27b | qwen2.5-coder:14b | qwen3:14b |
+| check | 説明 | T2必須 | devstral:24b | gemma3:12b | gemma3:27b | phi4:14b |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | `file_created` | commit_message.txt が生成されている | ✓ | ✅ | ✅ | ✅ | ✅ |
 | `has_verb` | 変更の種類を示す動詞がある | ✓ | ✅ | ✅ | ✅ | ✅ |

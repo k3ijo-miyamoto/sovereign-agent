@@ -1,6 +1,12 @@
 {
   "model": "mistral-nemo:12b",
   "provider": "ollama",
+  "evaluated_at": "2026-05-12T16:06:40.138160+09:00",
+  "runs_per_case": 3,
+  "timeout_sec": 180,
+  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
+  "sovereign_git": "38d26e4",
+  "ollama_version": "ollama version is 0.23.1",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -17,7 +23,7 @@
         "syntax_valid": true
       },
       "tool_call_count": 1.0,
-      "did_read": true,
+      "did_read": false,
       "did_edit": false,
       "did_verify": false,
       "did_re_edit": false,
@@ -40,7 +46,7 @@
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 1.0,
+      "tool_call_count": 1.7,
       "did_read": true,
       "did_edit": false,
       "did_verify": false,
@@ -64,9 +70,9 @@
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 1.0,
+      "tool_call_count": 1.3,
       "did_read": true,
-      "did_edit": false,
+      "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
       "stability_rate": 0.0,
@@ -86,7 +92,7 @@
         "covers_empty": true,
         "covers_partial": false
       },
-      "tool_call_count": 1.0,
+      "tool_call_count": 2.7,
       "did_read": false,
       "did_edit": true,
       "did_verify": false,
@@ -101,17 +107,17 @@
       "t2": false,
       "t3": false,
       "checks": {
-        "syntax_valid": true,
+        "syntax_valid": false,
         "annotations_added": false,
-        "no_body_change": true,
-        "has_return_type": false,
+        "no_body_change": false,
+        "has_return_type": true,
         "all_annotated": false
       },
-      "tool_call_count": 1.0,
-      "did_read": false,
-      "did_edit": false,
+      "tool_call_count": 4.7,
+      "did_read": true,
+      "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
+      "did_re_edit": true,
       "stability_rate": 0.0,
       "error": null
     },
@@ -128,12 +134,12 @@
         "subject_short": true,
         "mentions_parameter": true
       },
-      "tool_call_count": 1.3,
+      "tool_call_count": 3.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
-      "stability_rate": 0.3333333333333333,
+      "did_re_edit": true,
+      "stability_rate": 1.0,
       "error": null
     }
   ]

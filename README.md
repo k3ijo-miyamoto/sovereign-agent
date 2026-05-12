@@ -1,215 +1,5 @@
 # sovereign-agent
 
-An agentic CLI for local LLMs (Ollama) and the Anthropic API.  
-A clean-room implementation aimed at realizing **Sovereign AI** — using LLMs without sending confidential code to external cloud services.
-
-Implemented from scratch referencing only publicly available documentation: the Ollama API, the Anthropic Messages API, the VS Code Extension API, and Rust library documentation. See [LEGAL.md](LEGAL.md) for details.
-
-## Features
-
-- **Fully local execution** — Models run locally via Ollama. Your code never leaves the machine
-- **Anthropic API support** — Switch to cloud when needed
-- **Automatic XML mode** — Models without native tools API support (gemma3, phi4, codestral, etc.) are automatically switched to XML mode
-- **VSCode extension included** — Chat UI available inside the editor
-- **Evaluation harness included** — Quantitatively compare performance and stability across multiple models
-
-## What makes the evaluation different
-
-Most LLM benchmarks ask the model a question and score the answer.  
-This harness does something fundamentally different: **it runs the sovereign CLI as a subprocess against a real temporary filesystem**, exactly as it would run in production.
-
-```
-harness
-  └─ spawns sovereign as subprocess (temp dir, real files)
-       └─ LLM calls tools: read_file → write_file → bash (verify)
-            └─ harness checks: did the file change? does it run correctly?
-```
-
-Three things this captures that typical benchmarks miss:
-
-- **The full agent loop** — The model must read, edit, and verify using real tool calls. There is no API shortcut.
-- **Reproducibility, not one-shot accuracy** — Every task is run 3 times independently. A model that passes 1 in 3 times is treated as unreliable, regardless of score.
-- **Minimal intervention** — Passing "correctly" requires not breaking unrelated code. Over-editing is penalized.
-
-The counter-intuitive finding: **code-specialized models (codestral, devstral) underperformed general-purpose ones** on agent tasks, because they tend to over-edit and fail to stop. See [docs/sovereign-ai.md](docs/sovereign-ai.md) for the full analysis.
-
-## Requirements
-
-- Rust 1.75+ (`cargo` available)
-- [Ollama](https://ollama.com/) — local LLM runtime
-- VSCode 1.85+ (for the extension)
-
-## Quick Start
-
-```bash
-# 1. Pull a model via Ollama
-ollama pull qwen3:8b
-
-# 2. Build
-cd rust
-cargo build -p sovereign --release
-
-# 3. Run
-SOVEREIGN_MODEL=qwen3:8b cargo run -p sovereign
-```
-
-Using the Anthropic API:
-
-```bash
-SOVEREIGN_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-... SOVEREIGN_MODEL=claude-sonnet-4-6 cargo run -p sovereign
-```
-
-## Crate Layout
-
-```
-rust/
-└── crates/
-    ├── ollama/      Ollama API client (streaming, XML mode)
-    ├── anthropic/   Anthropic API client
-    ├── agent/       Agent loop (model-agnostic, ToolExecutor trait)
-    ├── tools/       Tool implementations (bash / read_file / write_file / list_files / grep_search / glob_search / edit_file)
-    ├── common/      Shared type definitions
-    └── cli/         REPL binary (sovereign)
-```
-
-## XML Mode
-
-Models whose prefixes are listed below do not support Ollama's native tools API. Tool definitions are embedded in the system prompt and the model responds with `<tool_call>` blocks. This is detected automatically from the model name — no user action required.
-
-| XML mode prefixes |
-|---|
-| `gemma3`, `phi4`, `codestral`, `devstral`, `deepseek` |
-
-## VSCode Extension
-
-Install the extension in `vscode-extension/` to chat with the agent in an editor side panel.
-
-**Settings (settings.json):**
-
-| Key | Default | Description |
-|---|---|---|
-| `sovereignAgent.provider` | `ollama` | `ollama` or `anthropic` |
-| `sovereignAgent.baseUrl` | `http://localhost:11434` | Ollama endpoint |
-| `sovereignAgent.model` | `gemma3:12b` | Model name |
-| `sovereignAgent.binaryPath` | `auto` | Path to sovereign binary (auto = search workspace) |
-| `sovereignAgent.systemPrompt` | — | Additional system prompt appended to the default |
-
-Per-task model overrides (`sovereignAgent.taskModel.docstring`, etc.) are also available.
-
-## Evaluation Harness
-
-`eval/` contains a harness for quantitatively comparing local LLMs using the sovereign binary.  
-15 models have been evaluated across two phases: **Phase 0** (bug fixing) and **Phase 1** (practical tasks).
-
-### Running Evaluations
-
-```bash
-# Phase 0: bug fixing (6 cases)
-SOVEREIGN_BIN=../rust/target/debug/sovereign \
-  python3 eval/phase0/run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
-
-# Phase 1: practical tasks (docstring / test generation / type annotation / commit message)
-SOVEREIGN_BIN=../rust/target/debug/sovereign \
-  python3 eval/phase1/run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
-
-# Re-run a specific case
-SOVEREIGN_BIN=../rust/target/debug/sovereign \
-  python3 eval/phase0/run_eval.py --model gemma3:27b --cases 04_boundary_bug --no-docker-warn
-```
-
-### Where Results Are Stored
-
-| Path | Contents |
-|---|---|
-| `eval/phase0/results/<model>.json` | Phase 0 per-model results (auto-generated) |
-| `eval/phase1/results/<model>.json` | Phase 1 per-model results (auto-generated) |
-| `eval/phase0/summary.md` | Phase 0 cross-model summary (generated by `python3 eval/phase0/summarize.py`) |
-| `eval/eval_results.md` | Phase 0 + Phase 1 integrated summary (manually updated) |
-| `.sovereign/decisions.jsonl` | Per-invocation routing decision log (JSONL append) |
-
-### Evaluation Results
-
-**Phase 0 — Bug Fixing (6 cases)**
-
-Broken code is given to the agent; pass/fail is determined by whether the execution output matches the expected value. Each case is run 3 times to measure stability.
-
-| Model | Score | Stability | Size |
-|---|:---:|:---:|---:|
-| **gemma3:27b** | 5/6 | 83% | 17GB |
-| **qwen3:14b** | 5/6 | 83% | 9.3GB |
-| qwen3:8b-nothink | 6/6 | 89% | 5.2GB |
-| qwen3:8b | 6/6 | 81% | 5.2GB |
-| gemma3:12b | 5/6 | 78% | 8GB |
-
-> `boundary_bug` (Fibonacci off-by-one) was a wall for nearly all models. Only qwen3-family models solved it.
-
-**Phase 1 — Practical Tasks (4 tasks)**
-
-Addition/generation tasks are evaluated against multiple criteria (AST checks, pytest, keyword matching, etc.). Minimal intervention — not modifying existing code — is also part of the evaluation.
-
-| Task | Evaluation method |
-|---|---|
-| Add docstring | AST: docstring inserted & function body unchanged |
-| Generate unit tests | `pytest` passes |
-| Add type annotations | AST: annotations added & function body unchanged |
-| Generate commit message | Required keywords present |
-
-| Model | Tasks passed | Size |
-|---|:---:|---:|
-| **gemma3:27b** | 4/4 | 17GB |
-| **qwen3:14b** | 4/4 | 9.3GB |
-| **gemma3:12b** | 4/4 | 8GB |
-| qwen3:8b-nothink | 3/4 | 5.2GB |
-| qwen3:8b | 3/4 | 5.2GB |
-
-> Code-specialized models (codestral / devstral) struggled with "leaving existing code untouched," causing them to underperform on docstring tasks.
-
-**Key findings:**
-
-- **Code-specialized models don't always win** — In agentic use, the ability to stop with minimal changes matters more than benchmark scores
-- **gemma3:12b is the cost-optimal choice** — Matches 27b on docstring, test generation, and type annotation tasks at half the size
-- **Task-model fit matters** — General-purpose models are stable across tasks; code-specialized models tend to over-edit
-
-**Recommended models per task (auto-selected by `--task` flag):**
-
-| `--task` | Recommended model | Basis |
-|---|---|---|
-| `docstring` / `type-annotate` | `gemma3:12b` | Phase 1 perfect score, fewest tool calls |
-| `test` | `qwen3:14b` | Phase 1 perfect score, high stability |
-| `commit-msg` | `qwen3:8b-nothink` | Lightweight, stab=100% |
-| `bugfix` | `gemma3:27b` | Phase 0 stability 83% |
-
-For details, see [docs/sovereign-ai.md](docs/sovereign-ai.md).
-
-## Security
-
-- `unsafe_code = "forbid"` — unsafe blocks are banned across the entire workspace
-- Dependencies are pinned via `Cargo.lock`; only crates.io sources are permitted (`cargo deny`)
-- `cargo audit` and `cargo deny check` run automatically each week via GitHub Actions
-
-## Build
-
-```bash
-cd rust
-
-# CLI only
-cargo build -p sovereign
-
-# All crates
-cargo build --workspace
-
-# Release build
-cargo build -p sovereign --release
-```
-
-## License
-
-MIT
-
----
-
-# sovereign-agent（日本語）
-
 ローカルLLM（Ollama）および Anthropic API に対応したエージェントCLI。
 機密コードを外部クラウドに送らずにLLMを活用する **Sovereign AI** の実現を目的としたクリーンルーム実装。
 
@@ -222,6 +12,17 @@ Ollama API・Anthropic Messages API・VS Code Extension API・Rust ライブラ�
 - **XMLモード自動切換** — native tools API 非対応モデル（gemma3, phi4, codestral 等）は自動でXMLモードに切り替え
 - **VSCode 拡張付属** — チャットUIをエディタ内で使用可能
 - **評価ハーネス付属** — 複数モデルの性能・安定性を定量比較できる
+
+## なぜ「Sovereign AI」か
+
+ここでの sovereign は、単にローカルLLMを使うことを意味しない。  
+データの行き先、モデルの実行場所、ルーティングの判断基準、評価の方法、そして判断の監査可能性 — それらの制御権を自分たちの側に置くことを意味する。
+
+- **データ**: 機密コードを外部APIに送らない
+- **実行**: Ollama 経由でユーザー管理環境上で動く
+- **ルーティング**: ローカル/クラウドの選択は明示的なポリシーに基づく
+- **評価**: 一般ベンチマークではなく自分たちの実タスクで測る
+- **監査**: ルーティング判断を `.sovereign/decisions.jsonl` に記録する
 
 ## 一般的なベンチマークとの違い
 
@@ -340,7 +141,8 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 | `eval/phase0/results/<model>.json` | Phase 0 の各モデルごとの評価結果（自動生成） |
 | `eval/phase1/results/<model>.json` | Phase 1 の各モデルごとの評価結果（自動生成） |
 | `eval/phase0/summary.md` | Phase 0 の全モデル比較サマリ（`python3 eval/phase0/summarize.py` で自動生成） |
-| `eval/eval_results.md` | Phase 0 + Phase 1 の統合サマリ（手動更新） |
+| `eval/phase1/summary.md` | Phase 1 の全モデル比較サマリ（`python3 eval/phase1/summarize.py` で自動生成） |
+| `CHANGELOG.md` | sovereign 本体への修正履歴（eval 実施を通じて発見した問題と対処） |
 | `.sovereign/decisions.jsonl` | sovereign 起動ごとのルーティング判定ログ（JSONL追記） |
 
 ### 評価結果サマリ
@@ -349,17 +151,22 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 
 壊れたコードを渡し、実行出力が期待値と一致するかで合否を判定。6ケースを3回ずつ実行して安定性を計測。
 
+<!-- eval-p0-start -->
 | モデル | 正解率 | 安定性 | サイズ |
 |---|:---:|:---:|---:|
-| **gemma3:27b** | 5/6 | 83% | 17GB |
-| **qwen3:14b** | 5/6 | 83% | 9.3GB |
-| qwen3:8b-nothink | 6/6 | 89% | 5.2GB |
-| qwen3:8b | 6/6 | 81% | 5.2GB |
-| gemma3:12b | 5/6 | 78% | 8GB |
+| **qwen3:14b** | 6/6 | 100% | 9.3GB |
+| **phi4:14b** | 6/6 | 89% | 9.1GB |
+| **qwen3:8b** | 6/6 | 86% | 5.2GB |
+| **gemma3:12b** | 5/6 | 83% | 8.1GB |
+| gemma3:27b | 5/6 | 78% | 17.0GB |
+| qwen3:8b-nothink | 5/6 | 78% | 5.2GB |
+| devstral:24b | 5/6 | 72% | 14.0GB |
+| qwen2.5:7b | 5/6 | 72% | 4.7GB |
 
-> boundary_bug（フィボナッチ off-by-one）はほぼ全モデルの壁。突破できたのは qwen3 系のみ。
+> boundary_bug（フィボナッチ off-by-one）はほぼ全モデルの壁。突破できたのは `deepseek-coder-v2:16b`, `phi4:14b`, `qwen3:14b`, `qwen3:8b` のみ。
+<!-- eval-p0-end -->
 
-**Phase 1 — 実務タスク（4タスク）**
+**Phase 1 — 実務タスク（6ケース）**
 
 「追加・生成」系のタスクを正しく・最小限にこなせるかを複数の基準（AST / pytest / キーワードマッチ等）でチェック。本体を変更していないか（最小介入）も評価軸に含む。
 
@@ -370,30 +177,44 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 | 型アノテーション追加 | AST で型アノテーションが付いているか・本体が変わっていないか |
 | コミットメッセージ生成 | 必須キーワードが含まれているか |
 
-| モデル | 4タスク通過 | サイズ |
+<!-- eval-p1-start -->
+> docstring 追加は3サブケース（単純・複雑・ヒント付き）に分けて評価。他タスクは各1ケース。
+
+| モデル | ケース通過 | サイズ |
 |---|:---:|---:|
-| **gemma3:27b** | 4/4 | 17GB |
-| **qwen3:14b** | 4/4 | 9.3GB |
-| **gemma3:12b** | 4/4 | 8GB |
-| qwen3:8b-nothink | 3/4 | 5.2GB |
-| qwen3:8b | 3/4 | 5.2GB |
+| **gemma3:12b** | 6/6 | 8.1GB |
+| **gemma3:27b** | 6/6 | 17.0GB |
+| **qwen2.5-coder:14b** | 6/6 | 9.0GB |
+| **qwen3:14b** | 6/6 | 9.3GB |
+| qwen3:8b-nothink | 5/6 | 5.2GB |
+| qwen3:8b | 5/6 | 5.2GB |
+| devstral:24b | 5/6 | 14.0GB |
+| phi4:14b | 5/6 | 9.1GB |
+<!-- eval-p1-end -->
 
 > コード特化モデル（codestral / devstral）は「余計な変更をしない」能力が低く、docstring タスクで失速。
 
 **主な知見:**
 
-- **コード特化モデルが必ずしも勝たない** — エージェント用途では「最小介入で止まれるか」が実用性を左右する
-- **gemma3:12b はコスト最優** — docstring・テスト生成・型アノテーションで 27b と同等を 8GB で達成
-- **タスクとモデルに相性がある** — 汎用モデルがタスク横断で安定。コード特化は過剰介入しやすい
+<!-- insights-start -->
+- **qwen3:14b が総合首位** — P0 T2=6/6 stab=100%・P1 T2=6/6 stab=83%。boundary_bug（off-by-one）も stab=100% で唯一安定突破
+- **gemma3:12b は実務タスクに最適** — P1 T2=6/6 stab=100%・calls=2.1。27b の半分のサイズで同等以上の成果
+- **qwen3:8b は P0・P1 ともに全冠** — 5.2GB で両フェーズ T2=6/6。型アノテーション（stab=50%）も今回通過。軽量環境の第一候補
+- **boundary_bug はほぼ全モデルの壁** — 解決できたのは qwen3:14b（100%）・qwen3:8b（67%）・phi4:14b（33%）・deepseek-coder-v2:16b（33%）の 4 モデルのみ
+- **qwen3:8b-nothink は型アノテーションが苦手** — type_annotate stab=0%。型アノテーションタスクは qwen3:8b（nothink でない）か gemma3 系を使うこと
+- **コード特化モデルが必ずしも勝たない** — codestral・devstral は P0 stab=50-72%。エージェント用途では「最小介入で止まれるか」が実用性を左右する
+<!-- insights-end -->
 
 **タスク別推奨モデル（`--task` フラグで自動選択される）:**
 
 | `--task` | 推奨モデル | 根拠 |
 |---|---|---|
-| `docstring` / `type-annotate` | `gemma3:12b` | P1全冠・calls最少 |
-| `test` | `qwen3:14b` | P1全冠・安定性高 |
-| `commit-msg` | `qwen3:8b-nothink` | 軽量・stab=100% |
-| `bugfix` | `gemma3:27b` | P0 安定性83% |
+| `docstring` / `type-annotate` | `gemma3:12b` | P1全冠・stab=100%・calls=2.1 |
+| `test` | `gemma3:12b` | P1全冠・stab=100%・covers_partial 唯一通過 |
+| `commit-msg` | `qwen3:8b-nothink` | 軽量・commit_message stab=100% |
+| `bugfix` | `qwen3:14b` | P0 stab=100%・boundary_bug 100% |
+
+> 軽量環境（〜5GB）では `--model qwen3:8b` で上書き（P0・P1 全冠・boundary_bug stab=67%）。
 
 詳細は [docs/sovereign-ai.md](docs/sovereign-ai.md) を参照。
 

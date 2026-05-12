@@ -3,10 +3,12 @@
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 EVAL_DIR = Path(__file__).parent
 CASES_DIR = EVAL_DIR / "cases"
+README_PATH = Path(__file__).parent.parent.parent / "README.md"
 
 # Approximate model sizes in GB for recommendation context
 MODEL_SIZES: dict[str, float] = {
@@ -454,6 +456,54 @@ def generate_phase2(all_results: list[dict], case_dirs: list[str]) -> list[str]:
     return lines
 
 
+def _readme_p0_table(all_results: list[dict], case_dirs: list[str]) -> str:
+    stats = [model_stats(e) for e in all_results]
+    n = len(case_dirs)
+    top = sorted(
+        [s for s in stats if s["n"] > 0 and s["t2"] >= n - 2],
+        key=lambda s: (s["t2"], s["avg_stability"] or 0),
+        reverse=True,
+    )[:8]
+
+    lines = ["| モデル | 正解率 | 安定性 | サイズ |", "|---|:---:|:---:|---:|"]
+
+    for s in top:
+        size = MODEL_SIZES.get(s["model"], "?")
+        stab = f"{s['avg_stability']:.0%}" if s["avg_stability"] is not None else "—"
+        bold = s["t2"] >= n - 1 and (s["avg_stability"] or 0) >= 0.80
+        name = f"**{s['model']}**" if bold else s["model"]
+        lines.append(f"| {name} | {s['t2']}/{n} | {stab} | {size}GB |")
+
+    boundary = "04_boundary_bug"
+    if boundary in case_dirs:
+        solvers = [s["model"] for s in stats if s["by_case"].get(boundary, {}).get("t2")]
+        if solvers:
+            solver_str = ", ".join(f"`{m}`" for m in solvers)
+            lines.append("")
+            lines.append(f"> boundary_bug（フィボナッチ off-by-one）はほぼ全モデルの壁。突破できたのは {solver_str} のみ。")
+
+    return "\n".join(lines)
+
+
+def _replace_readme_section(readme_path: Path, marker: str, new_content: str) -> bool:
+    text = readme_path.read_text()
+    pattern = re.compile(
+        rf"(<!-- {re.escape(marker)}-start -->)\n.*?\n(<!-- {re.escape(marker)}-end -->)",
+        re.DOTALL,
+    )
+    if not pattern.search(text):
+        print(f"Warning: marker '{marker}' not found in {readme_path}")
+        return False
+    updated = pattern.sub(rf"\1\n{new_content}\n\2", text)
+    readme_path.write_text(updated)
+    return True
+
+
+def update_readme_p0(readme_path: Path, all_results: list[dict], case_dirs: list[str]) -> None:
+    ok = _replace_readme_section(readme_path, "eval-p0", _readme_p0_table(all_results, case_dirs))
+    print(f"README Phase 0 updated: {ok}")
+
+
 def is_stability_tested(entry: dict) -> bool:
     """Return True if any case was run more than once (--runs > 1)."""
     return any(r.get("runs", 1) > 1 for r in entry["by_case"].values())
@@ -621,6 +671,16 @@ def main() -> None:
         default=str(EVAL_DIR / "results"),
         help="Directory containing *.json result files",
     )
+    parser.add_argument(
+        "--update-readme",
+        action="store_true",
+        help="Update Phase 0 tables in README.md",
+    )
+    parser.add_argument(
+        "--readme",
+        default=str(README_PATH),
+        help="Path to README.md (default: project root)",
+    )
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
@@ -653,6 +713,9 @@ def main() -> None:
         print(f"Written to {args.output}")
     else:
         print(output)
+
+    if args.update_readme:
+        update_readme_p0(Path(args.readme), all_results, case_dirs)
 
 
 if __name__ == "__main__":

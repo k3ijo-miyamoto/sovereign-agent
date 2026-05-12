@@ -1,6 +1,12 @@
 {
   "model": "qwen2.5:7b",
   "provider": "ollama",
+  "evaluated_at": "2026-05-12T17:00:39.972514+09:00",
+  "runs_per_case": 3,
+  "timeout_sec": 180,
+  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
+  "sovereign_git": "38d26e4",
+  "ollama_version": "ollama version is 0.23.1",
   "results": [
     {
       "case": "01_docstring_generate",
@@ -16,9 +22,9 @@
         "mentions_normalization": false,
         "syntax_valid": true
       },
-      "tool_call_count": 2.0,
-      "did_read": true,
-      "did_edit": true,
+      "tool_call_count": 1.0,
+      "did_read": false,
+      "did_edit": false,
       "did_verify": false,
       "did_re_edit": false,
       "stability_rate": 0.0,
@@ -27,25 +33,25 @@
     {
       "case": "02_docstring_complex",
       "runs": 3,
-      "t1": false,
-      "t2": false,
+      "t1": true,
+      "t2": true,
       "t3": false,
       "checks": {
         "syntax_valid": true,
-        "docstring_added": false,
+        "docstring_added": true,
         "no_body_change": true,
-        "mentions_weights": false,
-        "mentions_pad_value": false,
-        "mentions_min_periods": false,
+        "mentions_weights": true,
+        "mentions_pad_value": true,
+        "mentions_min_periods": true,
         "mentions_empty": false,
         "mentions_weights_alignment": false
       },
-      "tool_call_count": 1.0,
+      "tool_call_count": 2.0,
       "did_read": true,
-      "did_edit": false,
+      "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
-      "stability_rate": 0.0,
+      "did_re_edit": true,
+      "stability_rate": 0.3333333333333333,
       "error": null
     },
     {
@@ -65,7 +71,7 @@
         "mentions_weights_alignment": false
       },
       "tool_call_count": 1.0,
-      "did_read": true,
+      "did_read": false,
       "did_edit": false,
       "did_verify": false,
       "did_re_edit": false,
@@ -76,22 +82,22 @@
       "case": "03_test_generate",
       "runs": 3,
       "t1": true,
-      "t2": false,
-      "t3": false,
+      "t2": true,
+      "t3": true,
       "checks": {
         "test_file_created": true,
         "target_unchanged": true,
-        "pytest_pass": false,
+        "pytest_pass": true,
         "covers_error": true,
         "covers_empty": true,
         "covers_partial": false
       },
-      "tool_call_count": 3.7,
-      "did_read": false,
+      "tool_call_count": 12.3,
+      "did_read": true,
       "did_edit": true,
       "did_verify": false,
-      "did_re_edit": false,
-      "stability_rate": 0.0,
+      "did_re_edit": true,
+      "stability_rate": 0.3333333333333333,
       "error": null
     },
     {
@@ -107,12 +113,12 @@
         "has_return_type": true,
         "all_annotated": true
       },
-      "tool_call_count": 2.0,
+      "tool_call_count": 1.7,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
       "did_re_edit": false,
-      "stability_rate": 1.0,
+      "stability_rate": 0.6666666666666666,
       "error": null
     },
     {
@@ -128,11 +134,11 @@
         "subject_short": true,
         "mentions_parameter": true
       },
-      "tool_call_count": 2.7,
+      "tool_call_count": 2.0,
       "did_read": true,
       "did_edit": true,
       "did_verify": false,
-      "did_re_edit": true,
+      "did_re_edit": false,
       "stability_rate": 1.0,
       "error": null
     }

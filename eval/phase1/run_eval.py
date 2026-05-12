@@ -3,6 +3,7 @@
 
 import argparse
 import ast
+import datetime
 import json
 import re
 import shutil
@@ -505,7 +506,33 @@ def main() -> None:
     all_cases = sorted(d.name for d in CASES_DIR.iterdir() if d.is_dir())
     merged = [existing[c] for c in all_cases if c in existing]
 
-    out_data = {"model": args.model, "provider": args.provider, "results": merged}
+    # sovereign git hash
+    try:
+        git_hash = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=Path(__file__).parent.parent,
+            text=True,
+        ).strip()
+    except Exception:
+        git_hash = "unknown"
+
+    # ollama version
+    try:
+        ollama_ver = subprocess.check_output(["ollama", "--version"], text=True).strip()
+    except Exception:
+        ollama_ver = "unknown"
+
+    out_data = {
+        "model": args.model,
+        "provider": args.provider,
+        "evaluated_at": datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(),
+        "runs_per_case": args.runs,
+        "timeout_sec": args.timeout,
+        "sovereign_binary": str(SOVEREIGN_BIN),
+        "sovereign_git": git_hash,
+        "ollama_version": ollama_ver,
+        "results": merged,
+    }
     out_path.write_text(json.dumps(out_data, indent=2, ensure_ascii=False))
     print(f"Saved: {out_path.name}")
 

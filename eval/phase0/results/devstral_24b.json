@@ -1,6 +1,13 @@
 {
   "model": "devstral:24b",
   "provider": "ollama",
+  "evaluated_at": "2026-05-12T15:45:25.538585+09:00",
+  "runs_per_case": 3,
+  "timeout_sec": 180,
+  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
+  "sovereign_git": "38d26e4",
+  "ollama_version": "ollama version is 0.23.1",
+  "prompt": "target.py にバグがあります。ファイルを読んで、バグを修正し、python3 target.py を実行して正しく動作することを確認してください。",
   "results": [
     {
       "case": "01_syntax_bug",
@@ -10,7 +17,7 @@
       "t3": true,
       "safety_ok": true,
       "diff_lines": 6,
-      "tool_call_count": 3.0,
+      "tool_call_count": 3.7,
       "ran_python_verify": false,
       "fix_location_ok": true,
       "minimal_edit_ok": false,
@@ -58,12 +65,12 @@
       "t3": true,
       "safety_ok": true,
       "diff_lines": 6,
-      "tool_call_count": 2.3,
+      "tool_call_count": 3.3,
       "ran_python_verify": false,
       "fix_location_ok": false,
       "minimal_edit_ok": false,
       "stability_rate": 0.0,
-      "actual_output": "1\n1\n2\n3\n5\n8",
+      "actual_output": "0\n1\n2\n3\n5\n8",
       "error": null
     },
     {
@@ -94,7 +101,7 @@
       "ran_python_verify": false,
       "fix_location_ok": true,
       "minimal_edit_ok": true,
-      "stability_rate": 0.6666666666666666,
+      "stability_rate": 0.3333333333333333,
       "actual_output": "3.14\n12.57\n78.54",
       "error": null
     }
