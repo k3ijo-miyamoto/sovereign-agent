@@ -13,6 +13,26 @@ Implemented from scratch referencing only publicly available documentation: the 
 - **VSCode extension included** — Chat UI available inside the editor
 - **Evaluation harness included** — Quantitatively compare performance and stability across multiple models
 
+## What makes the evaluation different
+
+Most LLM benchmarks ask the model a question and score the answer.  
+This harness does something fundamentally different: **it runs the sovereign CLI as a subprocess against a real temporary filesystem**, exactly as it would run in production.
+
+```
+harness
+  └─ spawns sovereign as subprocess (temp dir, real files)
+       └─ LLM calls tools: read_file → write_file → bash (verify)
+            └─ harness checks: did the file change? does it run correctly?
+```
+
+Three things this captures that typical benchmarks miss:
+
+- **The full agent loop** — The model must read, edit, and verify using real tool calls. There is no API shortcut.
+- **Reproducibility, not one-shot accuracy** — Every task is run 3 times independently. A model that passes 1 in 3 times is treated as unreliable, regardless of score.
+- **Minimal intervention** — Passing "correctly" requires not breaking unrelated code. Over-editing is penalized.
+
+The counter-intuitive finding: **code-specialized models (codestral, devstral) underperformed general-purpose ones** on agent tasks, because they tend to over-edit and fail to stop. See [docs/sovereign-ai.md](docs/sovereign-ai.md) for the full analysis.
+
 ## Requirements
 
 - Rust 1.75+ (`cargo` available)
@@ -202,6 +222,26 @@ Ollama API・Anthropic Messages API・VS Code Extension API・Rust ライブラ�
 - **XMLモード自動切換** — native tools API 非対応モデル（gemma3, phi4, codestral 等）は自動でXMLモードに切り替え
 - **VSCode 拡張付属** — チャットUIをエディタ内で使用可能
 - **評価ハーネス付属** — 複数モデルの性能・安定性を定量比較できる
+
+## 一般的なベンチマークとの違い
+
+LLM の多くのベンチマークは「質問して回答を採点する」形式です。  
+このハーネスはそれとは根本的に異なる方法を取っています。**sovereign CLI を subprocess として本物の一時ファイルシステムに対して起動し、本番と同じ条件で動かします**。
+
+```
+ハーネス
+  └─ sovereign を subprocess として起動（一時ディレクトリ・本物のファイル）
+       └─ LLM がツールを呼び出す: read_file → write_file → bash（実行確認）
+            └─ ハーネスが判定: ファイルは変更されたか？正しく動くか？
+```
+
+典型的なベンチマークでは捉えられない3つのポイント：
+
+- **エージェントループの全体を測る** — モデルは実際のツール呼び出しで読み・直し・確認しなければならない。API ショートカットはない
+- **再現性を測る（1回の正解ではなく）** — 各タスクを3回独立実行。3回中1回しか通らないモデルはスコアに関わらず「不安定」と判定
+- **最小介入を評価する** — 正解するだけでなく、余計なコードを変えていないことも合否条件に含まれる
+
+反直感的な発見：**コード特化モデル（codestral, devstral）が汎用モデルに負けた**。理由は「過剰に編集して止まれない」こと。詳細は [docs/sovereign-ai.md](docs/sovereign-ai.md) を参照。
 
 ## 必要環境
 
