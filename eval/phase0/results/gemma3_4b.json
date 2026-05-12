@@ -4,7 +4,6 @@
   "evaluated_at": "2026-05-12T14:46:52.994849+09:00",
   "runs_per_case": 3,
   "timeout_sec": 180,
-  "sovereign_binary": "/path/to/sovereign-agent/rust/target/debug/sovereign",
   "sovereign_git": "38d26e4",
   "ollama_version": "ollama version is 0.23.1",
   "prompt": "target.py にバグがあります。ファイルを読んで、バグを修正し、python3 target.py を実行して正しく動作することを確認してください。",

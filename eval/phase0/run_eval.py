@@ -350,7 +350,6 @@ def main() -> None:
         "evaluated_at": datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(),
         "runs_per_case": args.runs,
         "timeout_sec": args.timeout,
-        "sovereign_binary": str(SOVEREIGN_BIN),
         "sovereign_git": git_hash,
         "ollama_version": ollama_ver,
         "prompt": PROMPT,

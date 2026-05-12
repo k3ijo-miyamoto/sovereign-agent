@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
-export SOVEREIGN_BIN=/path/to/sovereign-agent/rust/target/debug/sovereign
-cd /path/to/sovereign-agent
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export SOVEREIGN_BIN="$REPO_ROOT/rust/target/debug/sovereign"
+cd "$REPO_ROOT"
 
 MODELS=(
   gemma3:27b gemma3:12b gemma3:4b
@@ -34,7 +35,10 @@ python3 eval/phase0/summarize.py -o eval/phase0/summary.md --update-readme
 python3 eval/phase1/summarize.py -o eval/phase1/summary.md --update-readme
 
 echo "===== Update insights ====="
-echo "NOTE: README.md の insights セクションは Claude Code が解釈して書きます。"
-echo "      再評価後に「README.md の insights を summary.md に合わせて更新して」と依頼してください。"
+echo "NOTE: README.md の insights セクションは Claude Code による更新が必要です。"
+echo "      以下のプロンプトを Claude Code に貼り付けてください:"
+echo "----"
+cat eval/prompts/update_insights.txt
+echo "----"
 
 echo "===== ALL DONE: $(date) ====="
