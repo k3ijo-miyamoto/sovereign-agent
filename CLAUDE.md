@@ -113,7 +113,7 @@ SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase1/run_eval.py --mode
 SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase1/run_eval.py --model gemma3:27b --cases 03_test_generate --runs 3 --no-docker-warn
 
 # 全モデルを直列実行（Ollamaはシングルスレッドのため並列不可）
-export SOVEREIGN_BIN=/path/to/sovereign-agent/rust/target/debug/sovereign
+export SOVEREIGN_BIN=$(pwd)/rust/target/debug/sovereign
 for model in gemma3:27b qwen3:14b qwen3:8b-nothink gemma3:12b qwen3:8b phi4:14b; do
   python3 eval/phase1/run_eval.py --model "$model" --runs 3 --no-docker-warn
 done
@@ -161,34 +161,11 @@ python3 eval/phase1/summarize.py -o eval/phase1/summary.md
 
 ## 自動ルーティング設計方針
 
-ローカルLLMをどのタスク・どのファイルに使うかを自動判断する仕組み。2軸・4フェーズで実装する。
+設計の詳細・根拠は [docs/sovereign-ai.md のルーティング方針](docs/sovereign-ai.md#ルーティング方針) を参照。
 
-### 軸1: タスク → モデル選択（Phase A）
+### 実装状況
 
-タスク種別に応じて eval 実測ベースのデフォルトモデルを選択する。
-モデル割り当ての詳細は [docs/sovereign-ai.md のルーティング方針](docs/sovereign-ai.md) を参照のこと（一次情報: `eval/phase0/summary.md`・`eval/phase1/summary.md`）。
-
-### 軸2: 機密度 → ローカル/クラウド選択（Phase B）
-
-`.sovereign-ai.yml`（リポジトリルートまたはホームディレクトリ）でパスベースのルールを定義する。
-
-```yaml
-default_confidentiality: S2   # 不明はS2扱い（安全側デフォルト）
-paths:
-  "customer/**": S3
-  "internal/**": S2
-  "src/business_logic/**": S3
-  "docs/**": S0
-  "tests/**": S1
-```
-
-**設計原則:**
-- 判定不能・迷ったら → ローカル固定（false negative が致命的なため）
-- LLMによる機密度分類は「ローカル強制の補助」にのみ使う。クラウド許可の根拠にしない
-
-### 実装ロードマップ
-
-| Phase | 内容 | 状態 |
+| 実装ステップ | 内容 | 状態 |
 |---|---|---|
 | A | タスク種別に応じたデフォルトモデル選択 | ✅ 実装済み（`--task` フラグ・`classify_task()` 自動分類） |
 | B | `.sovereign-ai.yml` による機密度ルール | 未実装 |

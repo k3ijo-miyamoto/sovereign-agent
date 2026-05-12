@@ -216,7 +216,7 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 
 > 軽量環境（〜5GB）では `--model qwen3:8b` で上書き（P0・P1 全冠・boundary_bug stab=67%）。
 
-詳細は [docs/sovereign-ai.md](docs/sovereign-ai.md) を参照。
+詳細・ドキュメントの読む順番は [docs/sovereign-ai.md](docs/sovereign-ai.md#読む順番) を参照。
 
 ## セキュリティ
 
