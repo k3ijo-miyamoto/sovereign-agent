@@ -459,47 +459,149 @@ def is_stability_tested(entry: dict) -> bool:
     return any(r.get("runs", 1) > 1 for r in entry["by_case"].values())
 
 
-def generate_conclusion() -> list[str]:
+def generate_conclusion(all_results: list[dict], case_dirs: list[str]) -> list[str]:
+    stats    = [model_stats(e) for e in all_results]
+    n_cases  = len(case_dirs)
+    boundary = "04_boundary_bug"
+
+    # Stability-tested models ranked by (avg_stability desc, t2 desc)
+    tested = sorted(
+        [s for s in stats
+         if is_stability_tested(next(e for e in all_results if e["model"] == s["model"]))],
+        key=lambda s: (s["avg_stability"] or 0, s["t2"]),
+        reverse=True,
+    )
+
+    def fmt_stab(s: dict) -> str:
+        return f"{s['avg_stability']:.0%}" if s["avg_stability"] is not None else "—"
+
+    def fmt_calls(s: dict) -> str:
+        return f"{s['avg_calls']}" if s["avg_calls"] is not None else "—"
+
     lines: list[str] = []
     lines.append("## 総合評価の結論")
     lines.append("")
-    lines.append("### 第1推薦: `gemma3:27b`")
-    lines.append("")
-    lines.append(
-        "精度・効率・安定性の三冠。T2=6/6、安定性94%、calls=3.0（他モデルの1/3〜1/2）。"
-        "XMLモード動作だが実用上の問題なし。17GB の重さだけがトレードオフ。"
-    )
-    lines.append("")
-    lines.append("### 第2推薦: `qwen3:14b`")
-    lines.append("")
-    lines.append(
-        "精度・安定性は gemma3:27b と同等（T2=6/6、安定性94%）。"
-        "ツール呼び出しが多め（7.9回）だが、T3も完全（6/6）でクリーンな動作。9.3GB で現実的なサイズ。"
-    )
-    lines.append("")
-    lines.append("### 軽量環境向け: `qwen3:8b-nothink`")
-    lines.append("")
-    lines.append(
-        "5GB で T2=6/6、安定性89%。thinking モードをオフにすることで速度と安定性を両立。"
-        "RAM が限られる環境の第一選択。"
-    )
-    lines.append("")
+
+    # 第1推薦
+    if tested:
+        b = tested[0]
+        size = MODEL_SIZES.get(b["model"], "?")
+        lines.append(f"### 第1推薦: `{b['model']}`")
+        lines.append("")
+        lines.append(
+            f"T2={b['t2']}/{n_cases}、安定性{fmt_stab(b)}、calls={fmt_calls(b)}（{size}GB）。"
+            "安定性・精度ともにトップ。"
+        )
+        lines.append("")
+
+    # 第2推薦（第1と別モデル）
+    second = next((s for s in tested[1:] if s["model"] != (tested[0]["model"] if tested else "")), None)
+    if second:
+        size = MODEL_SIZES.get(second["model"], "?")
+        lines.append(f"### 第2推薦: `{second['model']}`")
+        lines.append("")
+        lines.append(
+            f"T2={second['t2']}/{n_cases}、安定性{fmt_stab(second)}、calls={fmt_calls(second)}（{size}GB）。"
+            "精度・安定性・サイズのバランスが良い。"
+        )
+        lines.append("")
+
+    # 軽量環境向け（≤5.5GB）
+    light = [s for s in tested if MODEL_SIZES.get(s["model"], 99) <= 5.5]
+    if light:
+        ls   = light[0]
+        size = MODEL_SIZES.get(ls["model"], "?")
+        # Only emit a separate section if it's a different model from 第1推薦
+        if not tested or ls["model"] != tested[0]["model"]:
+            lines.append(f"### 軽量環境向け: `{ls['model']}`")
+            lines.append("")
+            lines.append(
+                f"{size}GB で T2={ls['t2']}/{n_cases}、安定性{fmt_stab(ls)}。"
+                "RAM が限られる環境の第一選択。"
+            )
+            lines.append("")
+        else:
+            lines.append(f"### 軽量環境向け: `{ls['model']}`（第1推薦と同モデル）")
+            lines.append("")
+            lines.append(
+                f"{size}GB の小サイズでも精度・安定性ともに最高水準。軽量環境に最適。"
+            )
+            lines.append("")
+
+    # 想定外の発見
     lines.append("### 想定外の発見")
     lines.append("")
     lines.append("| 発見 | 内容 |")
     lines.append("| --- | --- |")
-    lines.append("| **devstral:24b の過大評価** | エージェント特化を謳うが安定性67%・boundary_bug 0%。単回評価では見えなかった弱さが露呈 |")
-    lines.append("| **codestral:22b も同様** | 安定性67%、boundary_bug が3回とも失敗（0%）。コード特化モデルだが難しいケースで崩れる |")
-    lines.append("| **gemma3:27b の圧倒的効率** | calls=3.0は「1読んで1書いて1確認」の理想的な動き。無駄なループをしない |")
-    lines.append("| **boundary_bug が最難関** | 全モデル中67%が失敗。off-by-one はLLMの弱点が如実に出るケース |")
+
+    # boundary_bug failure rate
+    if boundary in case_dirs:
+        b_results = [
+            e["by_case"][boundary]
+            for e in all_results
+            if boundary in e["by_case"] and not e["by_case"][boundary].get("error")
+        ]
+        if b_results:
+            fail_rate = sum(1 for r in b_results if not r["t2"]) / len(b_results)
+            solvers   = [s["model"] for s in stats if s["by_case"].get(boundary, {}).get("t2")]
+            solver_str = "・".join(f"`{m}`" for m in solvers) if solvers else "なし"
+            lines.append(
+                f"| **boundary_bug が最難関** | 全モデル中{round(fail_rate * 100)}%が失敗。"
+                f"解決できたのは {solver_str} のみ |"
+            )
+
+    # devstral observation
+    devstral = next((s for s in stats if s["model"] == "devstral:24b"), None)
+    if devstral and devstral["avg_stability"] is not None:
+        b_ok = devstral["by_case"].get(boundary, {}).get("t2", False)
+        b_note = "boundary_bug 0%" if not b_ok else f"boundary_bug 通過"
+        lines.append(
+            f"| **devstral:24b の過大評価** | エージェント特化を謳うが安定性{fmt_stab(devstral)}・{b_note}。"
+            "単回評価では見えなかった弱さが露呈 |"
+        )
+
+    # codestral observation
+    codestral = next((s for s in stats if s["model"] == "codestral:22b"), None)
+    if codestral and codestral["avg_stability"] is not None:
+        b_ok = codestral["by_case"].get(boundary, {}).get("t2", False)
+        lines.append(
+            f"| **codestral:22b も同様** | 安定性{fmt_stab(codestral)}、boundary_bug {'通過' if b_ok else '3回とも失敗（0%）'}。"
+            "コード特化モデルだが難しいケースで崩れる |"
+        )
+
+    # Most efficient high-accuracy model (T2 >= n_cases-1, fewest calls, exclude editorial subjects)
+    editorial = {devstral["model"] if devstral else "", codestral["model"] if codestral else ""}
+    top_acc   = [s for s in tested
+                 if s["t2"] >= n_cases - 1
+                 and s["avg_calls"] is not None
+                 and s["model"] not in editorial]
+    if top_acc:
+        eff = min(top_acc, key=lambda s: s["avg_calls"])
+        lines.append(
+            f"| **{eff['model']} の効率** | calls={fmt_calls(eff)}は読み込み・修正・確認の最小手数。無駄なループをしない |"
+        )
+
     lines.append("")
+
+    # ソブリンAI実用観点での結論
+    # 実用レベル: T2 >= n_cases-1 かつ stab >= 75% かつ editorial 対象外
+    practical  = [s["model"] for s in tested
+                  if s["t2"] >= n_cases - 1
+                  and (s["avg_stability"] or 0) >= 0.75
+                  and s["model"] not in editorial]
+    # 軽量（≤5.5GB）かつ実用レベル外だが T2 > n_cases//2 のモデル
+    light_only = [s["model"] for s in light
+                  if s["model"] not in practical and s["t2"] > n_cases // 2]
     lines.append("### ソブリンAI実用観点での結論")
     lines.append("")
     lines.append("「社内の機密コードを外部に送らずに自動修正したい」という用途において:")
     lines.append("")
-    lines.append("- **現時点で実用レベル**: `gemma3:27b`、`qwen3:14b`")
-    lines.append("- **軽量で十分**: `qwen3:8b-nothink`（小規模・定型タスク）")
-    lines.append("- **期待を下回った**: `devstral:24b`（エージェント特化を謳うが安定性不足）")
+    if practical:
+        lines.append(f"- **現時点で実用レベル**: {'、'.join(f'`{m}`' for m in practical)}")
+    if light_only:
+        lines.append(f"- **軽量で十分**: {'、'.join(f'`{m}`' for m in light_only)}（小規模・定型タスク）")
+    if devstral:
+        lines.append("- **期待を下回った**: `devstral:24b`（エージェント特化を謳うが安定性不足）")
     lines.append("")
     lines.append(
         "> **注意**: 本評価は単一ファイル・単純バグ6種に限定。"
@@ -516,15 +618,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--results-dir",
-        default=str(EVAL_DIR),
-        help="Directory containing results_*.json files",
+        default=str(EVAL_DIR / "results"),
+        help="Directory containing *.json result files",
     )
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
-    result_files = sorted(results_dir.glob("results_*.json"))
+    result_files = sorted(results_dir.glob("*.json"))
     if not result_files:
-        print("No results_*.json files found.")
+        print("No *.json files found.")
         return
 
     all_results = [load_results(f) for f in result_files]
@@ -542,7 +644,7 @@ def main() -> None:
     lines += generate_criteria(case_dirs, case_metas)
     lines += generate_phase1(all_results, case_dirs, case_metas)
     lines += generate_phase2(all_results, case_dirs)
-    lines += generate_conclusion()
+    lines += generate_conclusion(all_results, case_dirs)
 
     output = "\n".join(lines)
 

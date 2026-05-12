@@ -100,3 +100,103 @@ claw-code の VS Code 拡張もユーザー自身が書いたものであるた�
 ---
 
 *このメモは法的アドバイスではありません。正式な判断が必要な場合は弁護士に相談してください。*
+
+---
+
+# Legal Review Notes (English)
+
+This document records the review process confirming that sovereign-agent is an independently implemented project free of copyright concerns.
+
+---
+
+## Background
+
+The predecessor project claw-code had the following copyright chain:
+
+```
+Anthropic accidentally-leaked code → Yeachan-Heo Python port → claw-code
+```
+
+Parts of claw-code (rust/, src/) may be derivatives of the above, and publishing them as-is was judged to carry legal risk.
+
+Therefore, sovereign-agent was created as a clean-room implementation **without referencing any of the problematic code**.
+
+---
+
+## Basis for Clean-Room Determination
+
+### 1. Code Independence
+
+All Rust code in sovereign-agent was written from scratch without referencing claw-code/rust/ or claw-code/src/.
+
+Concrete differences demonstrating implementation independence:
+
+| Feature | claw-code/rust | sovereign-agent/rust |
+|---|---|---|
+| bash execution | 283 lines (sandbox, namespace isolation, background execution) | 57 lines (simple `bash -c cmd` execution) |
+| SSE parser | 128 lines (RFC-compliant stateful incremental parser) | 12 lines (strips `"data: "` prefix only) |
+| Tool count | bash/glob/grep/read/write/edit + MCP/OAuth etc. | bash/read_file/write_file/list_files/grep_search/glob_search/edit_file (7 tools) |
+| MCP | Full implementation (OAuth, process management, session persistence) | Minimal implementation (stdio process launch, tool listing, invocation only) |
+| Other | OAuth, sandbox, session persistence, compaction | None |
+
+The structure, scale, and implementation approach are all distinct — **there is no substantial similarity**.
+
+### 2. References Used
+
+The only sources referenced during implementation were publicly available:
+
+- Ollama API documentation (specification for the `/api/chat` endpoint)
+- Anthropic Messages API documentation (public API reference)
+- VS Code Extension API documentation
+- Rust standard library and crate documentation
+
+All of these are in the public domain or are published specifications; referencing them raises no legal concerns.
+
+### 3. Dependency License Verification
+
+Mechanical verification was performed using `cargo deny check licenses`:
+
+```
+licenses ok
+```
+
+Licenses of all crates used:
+
+| License | Representative crates |
+|---|---|
+| MIT or Apache-2.0 | tokio, reqwest, serde, anyhow, futures, etc. |
+| Apache-2.0 WITH LLVM-exception | Some compiler-related crates |
+| BSD-3-Clause | encoding_rs, etc. |
+| Unicode-3.0 | icu-related crates |
+
+All are OSI-approved open-source licenses compatible with MIT.
+
+### 4. VS Code Extension
+
+The VS Code extension code was independently implemented by the user.
+Because the claw-code VS Code extension was also written by the same user,
+**drawing inspiration** from it raises no copyright concern
+(copyright protects expression, not ideas or concepts).
+
+---
+
+## Conclusion
+
+| Aspect | Judgment | Basis |
+|---|---|---|
+| Rust code independence | ✅ No issue | Implemented from scratch; no substantial similarity |
+| VS Code extension | ✅ No issue | User's own independent implementation |
+| Dependency licenses | ✅ No issue | All verified via cargo deny |
+| References used | ✅ No issue | Public API documentation only |
+
+**sovereign-agent is determined to have no legal issues with publication on GitHub.**
+
+---
+
+## License
+
+This project is published under the MIT License (see [LICENSE](./LICENSE)).
+
+---
+
+*This note does not constitute legal advice. Consult a qualified attorney for formal legal opinions.*

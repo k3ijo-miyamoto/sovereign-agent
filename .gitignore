@@ -1,4 +1,5 @@
 rust/target/
+.sovereign/
 __pycache__/
 *.pyc
 .env

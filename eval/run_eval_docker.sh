@@ -43,9 +43,9 @@ if ! docker image inspect "${IMAGE_NAME}" &>/dev/null || \
 fi
 
 if [[ "${PHASE1}" == true ]]; then
-  EVAL_SCRIPT="run_eval_phase1.py"
+  EVAL_SCRIPT="phase1/run_eval.py"
 else
-  EVAL_SCRIPT="run_eval.py"
+  EVAL_SCRIPT="phase0/run_eval.py"
 fi
 
 echo "Running ${EVAL_SCRIPT} in Docker container (isolated)..."

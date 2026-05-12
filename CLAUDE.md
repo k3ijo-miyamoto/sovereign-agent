@@ -59,23 +59,35 @@ claw-code で整備し、sovereign-agent に移管したオリジナル実装。
 
 ```
 eval/
-├── run_eval.py           # フェーズ0ハーネス（バグ修正）
-├── run_eval_phase1.py    # フェーズ1ハーネス（criteria-based: docstring・テスト生成等）
-├── summarize.py          # フェーズ0結果をMarkdownにまとめるスクリプト
-├── summary.md            # フェーズ0評価サマリ（自動生成）
-├── summary_phase1.md     # フェーズ1評価サマリ（手動更新）
-├── cases/                # フェーズ0ケース（buggy.py / expected_output.txt / meta.json）
-│   ├── 01_syntax_bug/
-│   ├── 02_type_bug/
-│   ├── 03_logic_bug/
-│   ├── 04_boundary_bug/
-│   ├── 05_state_bug/
-│   └── 06_safety_trap/
-├── cases_phase1/         # フェーズ1ケース（target.py / prompt.txt / expected_criteria.json）
-│   ├── 01_docstring_generate/   # normalize_scores — min-max正規化
-│   ├── 02_docstring_complex/    # compute_moving_average — 引数5つの複雑な関数
-│   └── 03_test_generate/        # chunk — pytestで自動検証
-└── results_<model>.json  # フェーズ0モデルごとの評価結果（自動生成）
+├── phase0/
+│   ├── run_eval.py       # フェーズ0ハーネス（バグ修正）
+│   ├── summarize.py      # フェーズ0結果をMarkdownにまとめるスクリプト
+│   ├── summary.md        # フェーズ0評価サマリ（自動生成）
+│   ├── cases/            # フェーズ0ケース（buggy.py / expected_output.txt / meta.json）
+│   │   ├── 01_syntax_bug/
+│   │   ├── 02_type_bug/
+│   │   ├── 03_logic_bug/
+│   │   ├── 04_boundary_bug/
+│   │   ├── 05_state_bug/
+│   │   └── 06_safety_trap/
+│   └── results/          # フェーズ0モデルごとの評価結果（自動生成）
+│       └── <model>.json
+├── phase1/
+│   ├── run_eval.py       # フェーズ1ハーネス（criteria-based: docstring・テスト生成等）
+│   ├── summarize.py      # フェーズ1結果をMarkdownにまとめるスクリプト
+│   ├── summary.md        # フェーズ1評価サマリ（自動生成）
+│   ├── cases/            # フェーズ1ケース（target.py / prompt.txt / expected_criteria.json）
+│   │   ├── 01_docstring_generate/
+│   │   ├── 02_docstring_complex/
+│   │   ├── 02b_docstring_complex/
+│   │   ├── 03_test_generate/
+│   │   ├── 04_type_annotate/
+│   │   └── 05_commit_message/
+│   └── results/          # フェーズ1モデルごとの評価結果（自動生成）
+│       └── <model>.json
+├── eval_results.md       # P0 + P1 統合評価サマリ（Claude が生成・更新。数値は JSON と乖離しうるため再評価後は要更新）
+├── run_eval_docker.sh    # Docker経由実行ラッパー（--phase1 フラグで両フェーズ対応）
+└── Dockerfile
 ```
 
 ### 評価の実行
@@ -83,29 +95,32 @@ eval/
 ```bash
 # --- フェーズ0: バグ修正 ---
 # 直接実行
-SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/run_eval.py --model gemma3:27b --runs 1 --no-docker-warn
+SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase0/run_eval.py --model gemma3:27b --runs 1 --no-docker-warn
 
 # 安定性評価（選抜モデルのみ）
-SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
+SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase0/run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
 
 # 特定ケースのみ再実行（既存JSONにマージされる）
-SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/run_eval.py --model gemma3:27b --cases 04_boundary_bug --no-docker-warn
+SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase0/run_eval.py --model gemma3:27b --cases 04_boundary_bug --no-docker-warn
 
 # サマリ生成
-python3 eval/summarize.py -o eval/summary.md
+python3 eval/phase0/summarize.py -o eval/phase0/summary.md
 
 # --- フェーズ1: 実務タスク（criteria-based） ---
 # 全ケース実行
-SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/run_eval_phase1.py --model gemma3:27b --runs 3 --no-docker-warn
+SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase1/run_eval.py --model gemma3:27b --runs 3 --no-docker-warn
 
 # 特定ケースのみ
-SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/run_eval_phase1.py --model gemma3:27b --cases 03_test_generate --runs 3 --no-docker-warn
+SOVEREIGN_BIN=rust/target/debug/sovereign python3 eval/phase1/run_eval.py --model gemma3:27b --cases 03_test_generate --runs 3 --no-docker-warn
 
 # 全モデルを直列実行（Ollamaはシングルスレッドのため並列不可）
 export SOVEREIGN_BIN=/path/to/sovereign-agent/rust/target/debug/sovereign
 for model in gemma3:27b qwen3:14b qwen3:8b-nothink gemma3:12b qwen3:8b phi4:14b; do
-  python3 eval/run_eval_phase1.py --model "$model" --runs 3 --no-docker-warn
+  python3 eval/phase1/run_eval.py --model "$model" --runs 3 --no-docker-warn
 done
+
+# サマリ生成
+python3 eval/phase1/summarize.py -o eval/phase1/summary.md
 ```
 
 ### フェーズ0評価フロー
@@ -128,19 +143,19 @@ done
 | `pytest_pass` | `python3 -m pytest <filename>` が exit 0 か |
 | `string_match_file` | 指定ファイルの全テキスト内にキーワードが含まれるか |
 
-### 主な知見（2026-05、claw-code バイナリで計測）
+### 主な知見（2026-05、sovereign バイナリで計測）
 
 **フェーズ0（バグ修正）:**
-- **第1推薦**: `gemma3:27b` — T2=6/6、安定性94%、calls=3.0（最も効率的）
-- **第2推薦**: `qwen3:14b` — T2=6/6、安定性94%、T3も完全（6/6）
+- **第1推薦**: `gemma3:27b` — T2=5/6、安定性83%、P1 calls=2.1
+- **第2推薦**: `qwen3:14b` — T2=5/6、安定性83%
 - **軽量向け**: `qwen3:8b-nothink` — 5GBでT2=6/6、安定性89%
-- `devstral:24b` / `codestral:22b` は単回評価では上位だが安定性67%（boundary_bug で0%）
+- `devstral:24b` は安定性78%・`codestral:22b` は11%（いずれも boundary_bug は0%）
 
-**フェーズ1（docstring生成）:**
+**フェーズ1（実務タスク全6種）:**
 - `gemma3:12b` が `gemma3:27b` と完全同等スコア（docstringタスクに限り）
-- `qwen3:8b` がcalls=2.2・stab=100%でTier1入り — サイズに関係なく安定
+- `qwen3:8b` がcalls=1.9・stab=72%でTier1入り — 実務タスクはモデルサイズ依存が低い
 - `codestral:22b` / `deepseek-coder-v2:16b` 等コード特化モデルが逆に失速（本体変更・calls増大）
-- `granite3.3:8b` は calls=54.3（ループ状態）、`llama3.1:8b` は syntax_valid❌
+- `granite3.3:8b` は calls=0.0（ツール呼び出し自体が機能しない）、`llama3.1:8b` は calls暴走（avg=4.1）
 
 **共通:**
 - `gemma3` / `phi4` / `codestral` / `devstral` / `deepseek` は Ollama の tools API 非対応のため XML モードで動作
@@ -161,13 +176,7 @@ done
 ### 軸1: タスク → モデル選択（Phase A）
 
 タスク種別に応じて eval 実測ベースのデフォルトモデルを選択する。
-
-| タスク | デフォルトモデル |
-|---|---|
-| docstring / 型アノテーション | gemma3:12b |
-| テスト生成 | qwen3:14b |
-| コミットメッセージ | qwen3:8b-nothink |
-| バグ修正（複雑） | gemma3:27b |
+モデル割り当ての詳細は [docs/sovereign-ai.md のルーティング方針](docs/sovereign-ai.md) を参照のこと（一次情報: `eval/phase0/summary.md`・`eval/phase1/summary.md`）。
 
 ### 軸2: 機密度 → ローカル/クラウド選択（Phase B）
 

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Optional
 import os
 
-CASES_DIR = Path(__file__).parent / "cases_phase1"
+CASES_DIR = Path(__file__).parent / "cases"
 SOVEREIGN_BIN = Path(
     os.environ.get("SOVEREIGN_BIN", Path(__file__).parent.parent / "rust" / "target" / "debug" / "sovereign")
 ).resolve()
@@ -489,7 +489,8 @@ def main() -> None:
 
     # Save JSON
     safe_model = args.model.replace(":", "_").replace("/", "_")
-    out_path = Path(__file__).parent / f"results_phase1_{safe_model}.json"
+    out_path = Path(__file__).parent / "results" / f"{safe_model}.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
     existing: dict[str, dict] = {}
     if args.cases and out_path.exists():
