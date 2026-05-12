@@ -178,18 +178,18 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 | コミットメッセージ生成 | 必須キーワードが含まれているか |
 
 <!-- eval-p1-start -->
-> docstring 追加は3サブケース（単純・複雑・ヒント付き）に分けて評価。他タスクは各1ケース。安定性は各ケース3回実行の平均。
+> docstring 追加は3サブケース（単純・複雑・ヒント付き）に分けて評価。他タスクは各1ケース。
 
-| モデル | ケース通過 | 安定性 | サイズ |
-|---|:---:|:---:|---:|
-| **gemma3:12b** | 6/6 | 100% | 8.1GB |
-| **gemma3:27b** | 6/6 | 89% | 17.0GB |
-| **qwen3:14b** | 6/6 | 83% | 9.3GB |
-| **qwen3:8b** | 6/6 | 75% | 5.2GB |
-| **qwen2.5-coder:14b** | 6/6 | 72% | 9.0GB |
-| **devstral:24b** | 6/6 | 61% | 14.0GB |
-| **phi4:14b** | 6/6 | 50% | 9.1GB |
-| qwen3:8b-nothink | 5/6 | 72% | 5.2GB |
+| モデル | ケース通過 | サイズ |
+|---|:---:|---:|
+| **gemma3:12b** | 6/6 | 8.1GB |
+| **gemma3:27b** | 6/6 | 17.0GB |
+| **qwen3:14b** | 6/6 | 9.3GB |
+| **qwen3:8b** | 6/6 | 5.2GB |
+| **qwen2.5-coder:14b** | 6/6 | 9.0GB |
+| **devstral:24b** | 6/6 | 14.0GB |
+| **phi4:14b** | 6/6 | 9.1GB |
+| qwen3:8b-nothink | 5/6 | 5.2GB |
 <!-- eval-p1-end -->
 
 > P1 上位7モデルがすべて 6/6 通過。ただし安定性には差があり、gemma3:12b（100%）と phi4:14b（50%）では大きく異なる。
@@ -197,12 +197,12 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 **主な知見:**
 
 <!-- insights-start -->
-- **qwen3:14b が総合首位** — P0 T2=6/6 stab=100%・P1 T2=6/6 stab=83%（9.3GB）
-- **gemma3:12b は実務タスクに最適** — P1 T2=6/6 stab=100%・calls=2.1（8.1GB）
-- **qwen3:8b は軽量最強（5.2GB）** — P0 T2=6/6 stab=86%・P1 T2=6/6 stab=75%
-- **boundary_bug はほぼ全モデルの壁** — 突破できたのは 4 モデルのみ: qwen3:14b（100%）・qwen3:8b（67%）・deepseek-coder-v2:16b（33%）・phi4:14b（33%）
-- **type_annotate 失敗モデルに注意** — llama3.1:8b, granite3.3:8b, mistral-nemo:12b, gemma3:4b, codestral:22b, qwen3:8b-nothink は stab=0%。代替: deepseek-coder-v2:16b, qwen3:14b, gemma3:27b
-- **phi4:14b は P0 高精度・P1 不安定** — P0 stab=89%（上位）/ P1 stab=50%。安定採用は要注意
+- **qwen3:14b だけが全6ケースを3回とも解けた** — P0 stab=100%・P1 stab=83%。他モデルは必ずどこかで揺れる。「必ず動く」が必要なら現状唯一の選択肢（9.3GB）
+- **gemma3:12b は実務タスクで stab=100%** — P1 全6ケース3回とも通過。calls=2.1 と手数も最少。27b と同等の成果を半分のサイズ（8.1GB）で出す
+- **qwen3:8b は 5.2GB で P0・P1 ともに全冠** — 境界値バグも stab=67% で突破。RAM が限られる環境でも実用レベルに到達した唯一の軽量モデル
+- **boundary_bug は「論理を読む力」の分水嶺** — 15 モデル中 11 が 3 回とも失敗。突破できたのは qwen3:14b（100%）・qwen3:8b（67%）・phi4:14b（33%）・deepseek-coder-v2:16b（33%）のみ
+- **thinking の有無で同じモデルの挙動が変わる** — qwen3:8b-nothink は type_annotate stab=0%（3 回全滅）、thinking あり版は stab=50% で通過。タスクによってモードを使い分ける価値がある
+- **devstral:24b は「生成」は得意・「修正」は不得意** — P1（docstring/テスト/型アノテーション追加）は 6/6 全冠だが、P0 の boundary_bug は stab=0%。複雑な論理バグ修正では崩れる
 <!-- insights-end -->
 
 **タスク別推奨モデル（`--task` フラグで自動選択される）:**
