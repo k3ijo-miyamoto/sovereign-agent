@@ -34,7 +34,8 @@ python3 eval/phase0/summarize.py -o eval/phase0/summary.md --update-readme
 python3 eval/phase1/summarize.py -o eval/phase1/summary.md --update-readme
 
 echo "===== Update insights ====="
-PROMPT=$(cat eval/prompts/update_insights.txt)
-"$SOVEREIGN_BIN" --model qwen3:14b --plain-output prompt "$PROMPT"
+echo "NOTE: README.md の insights セクション（<!-- insights-start/end --> 間）は"
+echo "      ローカルLLMが出力フォーマットを守れないため自動更新をスキップします。"
+echo "      再評価後に Claude Code へ「README.md の insights を summary.md に合わせて更新して」と依頼してください。"
 
 echo "===== ALL DONE: $(date) ====="
