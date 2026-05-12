@@ -22,9 +22,9 @@ pub struct Cli {
 pub fn task_default_model(task: &str) -> Option<&'static str> {
     match task {
         "docstring" | "type-annotate" => Some("gemma3:12b"),
-        "test"                         => Some("qwen3:14b"),
+        "test"                         => Some("gemma3:12b"),
         "commit-msg"                   => Some("qwen3:8b-nothink"),
-        "bugfix"                       => Some("gemma3:27b"),
+        "bugfix"                       => Some("qwen3:14b"),
         _                              => None,
     }
 }
