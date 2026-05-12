@@ -34,6 +34,7 @@ python3 eval/phase0/summarize.py -o eval/phase0/summary.md --update-readme
 python3 eval/phase1/summarize.py -o eval/phase1/summary.md --update-readme
 
 echo "===== Update insights ====="
-python3 eval/update_insights.py
+echo "NOTE: README.md の insights セクションは Claude Code が解釈して書きます。"
+echo "      再評価後に「README.md の insights を summary.md に合わせて更新して」と依頼してください。"
 
 echo "===== ALL DONE: $(date) ====="
