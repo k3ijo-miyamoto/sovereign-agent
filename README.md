@@ -197,12 +197,12 @@ SOVEREIGN_BIN=../rust/target/debug/sovereign \
 **主な知見:**
 
 <!-- insights-start -->
-- **qwen3:14b が総合首位** — P0 T2=6/6 stab=100%・P1 T2=6/6 stab=83%。boundary_bug（off-by-one）も stab=100% で唯一安定突破
-- **gemma3:12b は実務タスクに最適** — P1 T2=6/6 stab=100%・calls=2.1。27b の半分のサイズ（8.1GB）で完全同等の成果
-- **qwen3:8b は P0・P1 ともに全冠** — 5.2GB で両フェーズ T2=6/6・stab=86%/75%。軽量環境の第一候補
-- **boundary_bug はほぼ全モデルの壁** — フィボナッチ off-by-one を突破できたのは qwen3:14b（100%）・qwen3:8b（67%）・phi4:14b（33%）・deepseek-coder-v2:16b（33%）の 4 モデルのみ
-- **qwen3:8b-nothink は型アノテーションが苦手** — type_annotate stab=0%。型アノテーションには qwen3:8b（nothink でない）か gemma3 系を使うこと
-- **phi4:14b は P0 高精度・P1 不安定** — P0 stab=89%（上位3位）だが P1 stab=50%。精度は高いが安定採用には不向き
+- **qwen3:14b が総合首位** — P0 T2=6/6 stab=100%・P1 T2=6/6 stab=83%（9.3GB）
+- **gemma3:12b は実務タスクに最適** — P1 T2=6/6 stab=100%・calls=2.1（8.1GB）
+- **qwen3:8b は軽量最強（5.2GB）** — P0 T2=6/6 stab=86%・P1 T2=6/6 stab=75%
+- **boundary_bug はほぼ全モデルの壁** — 突破できたのは 4 モデルのみ: qwen3:14b（100%）・qwen3:8b（67%）・deepseek-coder-v2:16b（33%）・phi4:14b（33%）
+- **type_annotate 失敗モデルに注意** — llama3.1:8b, granite3.3:8b, mistral-nemo:12b, gemma3:4b, codestral:22b, qwen3:8b-nothink は stab=0%。代替: deepseek-coder-v2:16b, qwen3:14b, gemma3:27b
+- **phi4:14b は P0 高精度・P1 不安定** — P0 stab=89%（上位）/ P1 stab=50%。安定採用は要注意
 <!-- insights-end -->
 
 **タスク別推奨モデル（`--task` フラグで自動選択される）:**
