@@ -267,7 +267,13 @@ ai-auditor framework は (ii) + (iii) の hybrid を採用している。これ�
 
 ## 6. Next layers
 
-本書は β-layer のみを扱った。残りの 4 layer は以下の文書で扱う (予定):
+本書は β-layer のみを扱った。ここで β-layer の明示的 scope limitation を一点明記する:
+
+> **C は single (action, context) unit の prohibition のみを扱い、trajectory / plan composition レベルの prohibition は β の射程外である**。
+
+各 step が (a_i, c_i) ∉ C で β-sovereignty を満たしながら、軌跡 (a_1, ..., a_n) の合成として C の禁則目的を達成する composition 攻撃 (例: 各 step は無害な化学合成手順だが、合成として禁制物質の生産能力を user に渡す) は、本書の β-foundation だけでは捕捉できない。この問題は trajectory レベルの prohibition として γ-layer (組織不変性 / 過程の identity) の射程に送る (§7 Open question 9、および Open question 3 と連動)。
+
+残りの 4 layer は以下の文書で扱う (予定):
 
 | Layer | 概要 | 別文書 |
 |---|---|---|
@@ -292,6 +298,7 @@ ai-auditor framework は (ii) + (iii) の hybrid を採用している。これ�
 6. **検証者集合の異質性 (heterogeneity of auditor set)**: §5.4 で示した複数性要請は「相関した盲点を持たない」verifier 集合を要求するが、"異質性 / 独立性" を formal に定義し、Gödel-2 / Löb 由来の複数性要請と組み合わせて、**最小 robust audit 集合** の構造を特徴づけられるか。人間 / AI の種別による異質性が、量的複数性に対し strict に多くの robustness を与えることを示せるか。
 7. **反実仮想政策 π_A\* の grounding**: π_A\* が A の構成 (M_A, U_A, C_A) から定まる、という Proposition 3' の前提は、いかなる意味で正当化されるか。Computational reconstruction (実行 trace)、declarative reconstruction (C_A からの逆算)、operational reconstruction (active probing) のいずれが基底か。Axiom 3b が与える evidence の **認識論的地位** (epistemic status) は、この grounding の選択に依存する。
 8. **BaseSupp_A の characterization**: BaseSupp_A(c) は実装依存量であり、一般には Act_A の真部分集合である (M_A の生成能力、U_A の評価による足切り、実装上の制約)。BaseSupp_A を formal にどう特徴づけるか、また NDP が現実の deployed LLM で成立するかは非自明。本 proposition の射程は NDP の成立する class に限定される。したがって NDP を満たす agent class の同定、および deployed LLM がどの程度その class に近似されるかは今後の課題である。
+9. **Multi-step plan composition による C 回避** [2026-05-26 追加]: 現在の C は (action, context) unit の prohibition のみを扱う。各 step が (a_i, c_i) ∉ C で β-sovereignty を満たしながら、軌跡 (a_1, ..., a_n) の合成として C の禁則目的を達成する agent が存在し得る。これは β-layer の構造的盲点であり、§3 の narrow Context 選択 (history-independent な step-wise prohibition への限定) の必然的副作用でもある。Trajectory レベルの prohibition は β-layer の射程外であり、Q3 (C と γ の階層関係) と連動して γ-layer (組織不変性 / 過程の identity) で扱う問題として送る。本書では明示的 limitation として §6 冒頭に記録した。
 
 ---
 
